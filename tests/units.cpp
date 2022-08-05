@@ -31,6 +31,7 @@ int main(void) {
   using power_e = power_multiply<power_a, power_c>;
   using power_f = power_multiply<my_base, my_base>;
   using power_g = power_multiply<my_base, power_e>;
+  using power_h = power_multiply<power_b, power_d, my_base>;
 
   static_assert(std::is_same_v<typename power_a::base, my_base>);
   static_assert(std::is_same_v<typename power_a::exponent, ratio<2, 3>>);
@@ -48,6 +49,8 @@ int main(void) {
 
   static_assert(std::is_same_v<typename power_g::base, my_base>);
   static_assert(std::is_same_v<typename power_g::exponent, ratio<31, 15>>);
+
+  static_assert(std::is_same_v<power_g, power_h>);
 
   return 0;
 }

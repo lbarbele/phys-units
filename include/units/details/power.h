@@ -28,7 +28,7 @@ namespace units::_details::_power {
 
   // general case
   template <class Pa, class Pb, class...Ps>
-  struct power_multiply : power_multiply<power_multiply<Pa, Pb>, Ps...> {};
+  struct power_multiply : power_multiply<typename power_multiply<Pa, Pb>::type, Ps...> {};
 
   // power multiply as a binary operator
   template <class Pa, class Pb>
