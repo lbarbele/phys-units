@@ -2,6 +2,9 @@
 
 #include <units/units.h>
 
+
+  template <class T>
+  struct lala;
 int main(void) {
   
   using namespace units::_details;
@@ -51,6 +54,21 @@ int main(void) {
   static_assert(std::is_same_v<typename power_g::exponent, ratio<31, 15>>);
 
   static_assert(std::is_same_v<power_g, power_h>);
+
+  // - tuples
+  using tuple_a = tuple<int, float, double, char>;
+  using tuple_b = tuple<char, float, int, double>;
+  using tuple_c = tuple_concat<tuple_a, tuple_b>;
+  using tuple_d = tuple<int, float, double, char, char, float, int, double>;
+  using tuple_e = tuple_merge_powers_t<tuple_c>;
+  using tuple_f = tuple<power_t<int, 2>, power_t<float, 2>, power_t<double, 2>, power_t<char, 2>>;
+
+  static_assert(std::is_same_v<tuple_c, tuple_d>);
+  static_assert(std::is_same_v<tuple_e, tuple_f>);
+  static_assert(std::is_same_v<tuple_convert_t<tuple_d, traits::void_t>, void>);
+
+
+  // static_assert();
 
   return 0;
 }
