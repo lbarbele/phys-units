@@ -54,6 +54,7 @@ namespace units::_details {
 
   // aliases for some common powers
   template <class T> using power_null = power_t<T, 0>;
+  template <class T> using inverse = power_t<T, -1>;
 
   // alias for power multiplication
   template <class Pa, class Pb = power_null<Pa>, class... Ps>
