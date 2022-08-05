@@ -16,7 +16,7 @@ namespace units::_details::_power {
     static_assert(traits::is_ratio_v<R>, "The exponent of a power must be a ratio.");
     using base = T;
     using exponent = typename R::type;
-    using type = power<T, exponent>;
+    using type = power<base, exponent>;
   };
 
   // specialization for a power of a power
@@ -32,7 +32,8 @@ namespace units::_details::_power {
 
   // power multiply as a binary operator
   template <class Pa, class Pb>
-  struct power_multiply<Pa, Pb> : power_multiply<power<Pa>, power<Pb>> {};
+  struct power_multiply<Pa, Pb>
+  : power_multiply<typename power<Pa>::type, typename power<Pb>::type> {};
 
   template <class Ta, class Tb, class Ra, class Rb>
   struct power_multiply<power<Ta, Ra>, power<Tb, Rb>> {
@@ -56,7 +57,7 @@ namespace units::_details {
 
   // alias for power multiplication
   template <class Pa, class Pb = power_null<Pa>, class... Ps>
-  using power_multiply = typename _power::power_multiply<Pa, Pb, Ps...>;
+  using power_multiply = typename _power::power_multiply<Pa, Pb, Ps...>::type;
 }
 
 #endif
