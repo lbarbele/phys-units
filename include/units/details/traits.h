@@ -7,6 +7,14 @@
 
 namespace units::_details::tags {
   struct power {};
+  struct fundamental_quantity {};
+}
+
+namespace units::_details::props {
+  template <unsigned i>
+  struct indexed {
+    static constexpr auto index = i;
+  };
 }
 
 namespace units::_details::traits {
