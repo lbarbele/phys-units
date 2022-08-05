@@ -13,7 +13,7 @@ namespace units::_details {
   using std::ratio_divide;
 
   template <std::intmax_t Num, std::intmax_t Den>
-  using ratio_tp = typename ratio<Num, Den>::type;
+  using ratio_t = typename ratio<Num, Den>::type;
 }
 
 #endif
