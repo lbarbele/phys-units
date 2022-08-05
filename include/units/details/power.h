@@ -26,9 +26,13 @@ namespace units::_details::_power {
 
   // - multiplication of powers
 
-  // general case
+  // forward declaration
+  template <class P, class... Ps>
+  struct power_multiply;
+
+  // general case with at least two arguments
   template <class Pa, class Pb, class...Ps>
-  struct power_multiply : power_multiply<typename power_multiply<Pa, Pb>::type, Ps...> {};
+  struct power_multiply<Pa, Pb, Ps...> : power_multiply<typename power_multiply<Pa, Pb>::type, Ps...> {};
 
   // power multiply as a binary operator
   template <class Pa, class Pb>
@@ -39,6 +43,12 @@ namespace units::_details::_power {
   struct power_multiply<power<Ta, Ra>, power<Tb, Rb>> {
     static_assert(std::is_same_v<Ta, Tb>, "Cannot multiply powers of different bases.");
     using type = typename power<Ta, ratio_add<Ra, Rb>>::type;
+  };
+
+  // single parameter specialization
+  template <class P>
+  struct power_multiply<P> {
+    using type = typename power<P>::type;
   };
 
 }
@@ -57,8 +67,8 @@ namespace units::_details {
   template <class T> using inverse = power_t<T, -1>;
 
   // alias for power multiplication
-  template <class Pa, class Pb = power_null<Pa>, class... Ps>
-  using power_multiply = typename _power::power_multiply<Pa, Pb, Ps...>::type;
+  template <class P, class... Ps>
+  using power_multiply = typename _power::power_multiply<P, Ps...>::type;
 }
 
 #endif
