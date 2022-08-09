@@ -21,6 +21,16 @@ namespace units::_details::traits {
   // create void from pack
   template <class... Ts> using void_t = void;
 
+  // check if type is indexed (conatins ::index static member of integer type)
+  template <class T, class Enabler = void>
+  struct is_indexed : std::false_type {};
+
+  template <class T>
+  struct is_indexed<T, void_t<decltype(T::index)>> : std::true_type {};
+
+  template <class T>
+  constexpr inline bool is_indexed_v = is_indexed<T>::value;
+
   // check if class can represent a ratio (contains ::num and ::den members)
   template <class T, class Enabler = void>
   struct is_ratio : std::false_type {};
