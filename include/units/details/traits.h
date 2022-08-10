@@ -23,7 +23,8 @@ namespace units::_details::traits {
   struct is_indexed : std::false_type {};
 
   template <class T>
-  struct is_indexed<T, std::void_t<decltype(T::index)>> : std::true_type {};
+  struct is_indexed<T, std::void_t<decltype(T::index)>> // : std::true_type {};
+  : std::bool_constant<std::is_integral_v<decltype(T::index)>> {};
 
   template <class T>
   constexpr inline bool is_indexed_v = is_indexed<T>::value;
