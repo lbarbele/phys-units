@@ -1,6 +1,7 @@
 #ifndef _include_units_details_tuple_h
 #define _include_units_details_tuple_h
 
+#include <algorithm>
 #include <tuple>
 
 #include <units/details/power.h>
@@ -8,6 +9,10 @@
 namespace units::_details {
   // - tuple
   using std::tuple;
+
+  // - tuple access element by index
+  using std::tuple_element;
+  using std::tuple_element_t;
 
   // - tuple concatenation
   template <class... Ts>
@@ -48,6 +53,26 @@ namespace units::_details {
 
   template <class TupleType>
   using tuple_merge_powers_t = typename tuple_merge_powers<TupleType, tuple<>>::type;
+
+  // - remove first indexed type matching index
+  template <unsigned i, class A, class B = tuple<>> struct tuple_remove_first_index;
+
+  template <unsigned i, class T, class... Ts, class... Us>
+  struct tuple_remove_first_index<i, tuple<T, Ts...>, tuple<Us...>> {
+    using type = std::conditional_t<
+      power<T>::base::index == i, tuple<Us..., Ts...>, typename tuple_remove_first_index<i, tuple<Ts...>, tuple<Us..., T>>::type
+    >;
+
+    using removed = T;
+  };
+
+  template <unsigned i, class... Us>
+  struct tuple_remove_first_index<i, tuple<>, tuple<Us...>> {
+    using type = tuple<Us...>;
+  };
+
+  template <unsigned i, class T>
+  using tuple_remove_first_index_t = typename tuple_remove_first_index<i, T, tuple<>>::type;
 }
 
 #endif
