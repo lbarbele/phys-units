@@ -68,6 +68,11 @@ int main(void) {
   using tuple_i = tuple_remove_first_index_t<1, tuple_h>;
   using tuple_j = tuple_remove_first_index_t<5, tuple_h>;
   using tuple_k = tuple<props::indexed<3>, props::indexed<0>, props::indexed<2>, props::indexed<1>>;
+  // sort powers of indexed types
+  using tuple_l = tuple<power<props::indexed<3>, 2>, props::indexed<0>, power<props::indexed<1>, -1>, props::indexed<2>, power<props::indexed<1>, 13>>;
+  using tuple_m = tuple_sort_indexed_t<tuple_l>;
+  using tuple_n = tuple<props::indexed<0>, power<props::indexed<1>, -1>, power<props::indexed<1>, 13>, props::indexed<2>, power<props::indexed<3>, 2>>;
+  
 
   // tuple concatenation
   static_assert(std::is_same_v<tuple_c, tuple_d>);
@@ -84,6 +89,8 @@ int main(void) {
   static_assert(std::is_same_v<tuple_i, tuple_k>);
   static_assert(std::is_same_v<tuple_j, tuple_h>);
   static_assert(std::is_same_v< props::indexed<1>, typename tuple_remove_first_index<1, tuple_h>::removed_type >);
+  // sort tuple of (powers of) indexed types
+  static_assert(std::is_same_v<tuple_m, tuple_n>);
 
   return 0;
 }

@@ -80,6 +80,25 @@ namespace units::_details {
 
   template <unsigned i, class T>
   using tuple_remove_first_index_t = typename tuple_remove_first_index<i, T>::type;
+
+  // - sort powers of indexed bases
+  template <class T, class U = tuple<>> struct tuple_sort_indexed;
+
+  template <class... Us>
+  struct tuple_sort_indexed<tuple<>, tuple<Us...>> {
+    using type = tuple<Us...>;
+  };
+
+  template <class T, class... Ts, class... Us>
+  struct tuple_sort_indexed<tuple<T, Ts...>, tuple<Us...>> {
+    static constexpr unsigned min = std::min({power_t<T>::base::index, power_t<Ts>::base::index...});
+    using next = typename tuple_remove_first_index<min, tuple<T, Ts...>>::removed_type;
+    using remaining = tuple_remove_first_index_t<min, tuple<T, Ts...>>;
+    using type = typename tuple_sort_indexed<remaining, tuple<Us..., next>>::type;
+  };
+
+  template <class T>
+  using tuple_sort_indexed_t = typename tuple_sort_indexed<T>::type;
 }
 
 #endif
