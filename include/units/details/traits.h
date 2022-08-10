@@ -18,15 +18,12 @@ namespace units::_details::props {
 }
 
 namespace units::_details::traits {
-  // create void from pack
-  template <class... Ts> using void_t = void;
-
   // check if type is indexed (conatins ::index static member of integer type)
   template <class T, class Enabler = void>
   struct is_indexed : std::false_type {};
 
   template <class T>
-  struct is_indexed<T, void_t<decltype(T::index)>> : std::true_type {};
+  struct is_indexed<T, std::void_t<decltype(T::index)>> : std::true_type {};
 
   template <class T>
   constexpr inline bool is_indexed_v = is_indexed<T>::value;
@@ -36,7 +33,7 @@ namespace units::_details::traits {
   struct is_ratio : std::false_type {};
 
   template <class T>
-  struct is_ratio<T, void_t<decltype(T::num), decltype(T::den)>> : std::true_type {};
+  struct is_ratio<T, std::void_t<decltype(T::num), decltype(T::den)>> : std::true_type {};
 
   template <class T>
   constexpr inline bool is_ratio_v = is_ratio<T>::value;
