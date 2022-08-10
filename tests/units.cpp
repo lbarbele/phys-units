@@ -83,6 +83,7 @@ int main(void) {
   // remove index from tuple of indexed types
   static_assert(std::is_same_v<tuple_i, tuple_k>);
   static_assert(std::is_same_v<tuple_j, tuple_h>);
+  static_assert(std::is_same_v< props::indexed<1>, typename tuple_remove_first_index<1, tuple_h>::removed_type >);
 
   return 0;
 }

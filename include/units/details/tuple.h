@@ -60,19 +60,26 @@ namespace units::_details {
   template <unsigned i, class T, class... Ts, class... Us>
   struct tuple_remove_first_index<i, tuple<T, Ts...>, tuple<Us...>> {
     using type = std::conditional_t<
-      power<T>::base::index == i, tuple<Us..., Ts...>, typename tuple_remove_first_index<i, tuple<Ts...>, tuple<Us..., T>>::type
+      power<T>::base::index == i,
+      tuple<Us..., Ts...>,
+      typename tuple_remove_first_index<i, tuple<Ts...>, tuple<Us..., T>>::type
     >;
 
-    using removed = T;
+    using removed_type = std::conditional_t<
+      power<T>::base::index == i,
+      T,
+      typename tuple_remove_first_index<i, tuple<Ts...>, tuple<Us..., T>>::removed_type
+    >;
   };
 
   template <unsigned i, class... Us>
   struct tuple_remove_first_index<i, tuple<>, tuple<Us...>> {
     using type = tuple<Us...>;
+    using removed_type = void;
   };
 
   template <unsigned i, class T>
-  using tuple_remove_first_index_t = typename tuple_remove_first_index<i, T, tuple<>>::type;
+  using tuple_remove_first_index_t = typename tuple_remove_first_index<i, T>::type;
 }
 
 #endif
