@@ -12,7 +12,9 @@ namespace units::_details {
   using std::ratio_multiply;
   using std::ratio_divide;
 
-  template <std::intmax_t Num, std::intmax_t Den>
+  using intm_t = std::intmax_t;
+
+  template <intm_t Num, intm_t Den>
   using ratio_t = typename ratio<Num, Den>::type;
 }
 
