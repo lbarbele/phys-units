@@ -25,15 +25,15 @@ namespace units {
   // - base units
   using _details::base_unit;
 
-  using meter     = base_unit<length>;
-  using second    = base_unit<time>;
-  using kilogram  = base_unit<mass>;
-  using ampere    = base_unit<electric_current>;
-  using kelvin    = base_unit<temperature>;
-  using mole      = base_unit<amount_of_substance>;
-  using candela   = base_unit<luminous_intensity>;
-  using radian    = base_unit<angle>;
-  using steradian = base_unit<solid_angle>;
+  using meter     = base_unit<0>;
+  using second    = base_unit<1>;
+  using kilogram  = base_unit<2>;
+  using ampere    = base_unit<3>;
+  using kelvin    = base_unit<4>;
+  using mole      = base_unit<5>;
+  using candela   = base_unit<6>;
+  using radian    = base_unit<7>;
+  using steradian = base_unit<8>;
 }
 
 #endif
