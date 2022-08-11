@@ -8,6 +8,7 @@
 namespace units::_details::tags {
   struct power {};
   struct fundamental_quantity {};
+  struct physical_quantity {};
 }
 
 namespace units::_details::props {

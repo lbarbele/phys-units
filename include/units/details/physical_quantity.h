@@ -10,9 +10,7 @@ namespace units::_details::_physical_quantity {
   // - fundamental quantity
 
   template <unsigned index>
-  struct fundamental_quantity
-  : tags::fundamental_quantity,
-    props::indexed<index> {};
+  struct fundamental_quantity : tags::fundamental_quantity, props::indexed<index> {};
 
   // alias to be used only in this NS
   template <unsigned i>
@@ -21,7 +19,7 @@ namespace units::_details::_physical_quantity {
   // - general physical quantity
 
   template <class... Ts>
-  struct physical_quantity {
+  struct physical_quantity : tags::physical_quantity {
     static_assert(
       std::conjunction_v< traits::is_fundamental_quantity<typename power_t<Ts>::base>... >,
       "Physical quantities can only be specified in terms of fundamental quantities"
