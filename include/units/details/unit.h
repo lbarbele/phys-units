@@ -22,7 +22,7 @@ namespace units::_details::_unit {
       std::conjunction_v< traits::is_base_unit<typename power_t<Ts>::base>... >,
       "Derived units can only be defined in terms of base units.");
     using factor = S;
-    using base_units = tuple<Ts...>;
+    using units_product = tuple<Ts...>;
   };
 
   // - unit creator
