@@ -50,6 +50,10 @@ namespace units::_details::traits {
   template <class T> struct is_fundamental_quantity : std::is_base_of<tags::fundamental_quantity, T> {};
   template <class T> constexpr inline bool is_fundamental_quantity_v = is_fundamental_quantity<T>::value;
 
+  // check if type represents a physical quantity
+  template <class T> struct is_physical_quantity : std::is_base_of<tags::physical_quantity, T> {};
+  template <class T> constexpr inline bool is_physical_quantity_v = is_physical_quantity<T>::value;
+
   // check if type represents a base unit
   template <class T> struct is_base_unit : std::is_base_of<tags::base_unit, T> {};
   template <class T> constexpr inline bool is_base_unit_v = is_base_unit<T>::value;
