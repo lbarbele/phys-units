@@ -9,6 +9,8 @@ namespace units::_details::tags {
   struct power {};
   struct fundamental_quantity {};
   struct physical_quantity {};
+  struct base_unit {};
+  struct unit {};
 }
 
 namespace units::_details::props {
@@ -45,9 +47,12 @@ namespace units::_details::traits {
   template <class T> constexpr inline bool is_power_v = is_power<T>::value;
 
   // check if class represents a fundamental quantity
-  template <class T> struct is_fundamental_quantity : std::bool_constant<std::is_base_of_v<tags::fundamental_quantity, T>> {};
+  template <class T> struct is_fundamental_quantity : std::is_base_of<tags::fundamental_quantity, T> {};
   template <class T> constexpr inline bool is_fundamental_quantity_v = is_fundamental_quantity<T>::value;
 
+  // check if type represents a base unit
+  template <class T> struct is_base_unit : std::is_base_of<tags::base_unit, T> {};
+  template <class T> constexpr inline bool is_base_unit_v = is_base_unit<T>::value;
 }
 
 #endif

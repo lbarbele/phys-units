@@ -6,8 +6,11 @@
 #include <units/details/traits.h>
 
 namespace units::_details::_unit {
+
+  // - base unit
+
   template <class Q>
-  struct base_unit : props::indexed<Q::index> {
+  struct base_unit : tags::base_unit, props::indexed<Q::index> {
     static_assert(traits::is_fundamental_quantity_v<Q>,
     "Base units can only be defined in terms of a single fundamental quantity");
 
