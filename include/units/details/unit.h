@@ -13,17 +13,9 @@ namespace units::_details::_unit {
   template <unsigned index>
   struct base_unit : tags::base_unit, props::indexed<index> {};
 
-  // - general unit
+  // - forward-declare the general unit struct
 
-  template <class S, class... Ts>
-  struct unit {
-    static_assert(traits::is_ratio_v<S>, "Scale factor must be a ratio.");
-    static_assert(
-      std::conjunction_v< traits::is_base_unit<typename power_t<Ts>::base>... >,
-      "Derived units can only be defined in terms of base units.");
-    using factor = S;
-    using units_product = tuple<Ts...>;
-  };
+  template <class S, class... Ts> struct unit;
 
   // - unit creator
 
@@ -66,6 +58,21 @@ namespace units::_details::_unit {
     using sorted = tuple_sort_indexed_t<merged>;
     using unit_args = tuple_concat<tuple<ratio<num, den>>, sorted>;
     using type = tuple_convert_t<unit_args, unit>;
+  };
+
+  // - general unit
+
+  template <class S, class... Ts>
+  struct unit {
+    static_assert(traits::is_ratio_v<S>, "Scale factor must be a ratio.");
+    static_assert(
+      std::conjunction_v< traits::is_base_unit<typename power_t<Ts>::base>... >,
+      "Derived units can only be defined in terms of base units.");
+    using factor = S;
+    using units_product = tuple<Ts...>;
+
+    template <class... Us> using times = typename make_unit<factor, units_product, Us...>::type;
+    template <class... Us> using over = typename make_unit<factor, units_product, inverse<Us>...>::type;
   };
 }
 
