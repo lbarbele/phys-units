@@ -42,14 +42,12 @@ namespace units::_details::_unit {
   : make_unit< ratio<na, da>, tuple<Ts..., power_t< base_unit<idx>, nb, db > >, Us... > {};
 
   // next parameter is power of unit
-  // ! warning: still not supported, only powers with exponent = 1 are allowed...
-  template <intm_t num, intm_t den, class... Ts, class S, class... Us, class... Vs>
-  struct make_unit< ratio<num, den>, tuple<Ts...>, power< unit<S, Us...>, 1, 1>, Vs... >
-  : make_unit< ratio<num, den>, tuple<Ts...>, unit<S, Us...>, Vs...> {};
-  // ! ...or any power of a unit with scale factor = 1/1
-  template <intm_t na, intm_t da, class... Ts, class... Us, intm_t nb, intm_t db, class... Vs>
-  struct make_unit< ratio<na, da>, tuple<Ts...>, power< unit< ratio<1,1>, Us...>, nb, db >, Vs...>
-  : make_unit< ratio<na, da>, tuple<Ts..., power_t<Us, nb, db>...>, Vs... > {};
+  // ! warning: only integer powers are supported
+  template <intm_t na, intm_t da, class... Ts, class S, class... Us, intm_t exp_num, intm_t exp_den, class... Vs>
+  struct make_unit< ratio<na, da>, tuple<Ts...>, power< unit<S, Us...>, exp_num, exp_den>, Vs...>
+  : make_unit< ratio<na, da>, tuple<Ts...>, ratio_power<S, exp_num>, power_t<Us, exp_num>..., Vs... > {
+    // static_assert(exp_den == 1, "Fractional powers are not allowed");
+  };
 
   // base case: scale factor and tuple of powers of base units
   template <intm_t num, intm_t den, class... Ts>
