@@ -2,17 +2,23 @@
 #define _include_units_details_quantity_h
 
 #include <units/details/power.h>
+#include <units/details/traits.h>
 #include <units/details/unit.h>
 
 namespace units::_details {
 
-  template <class... Ts>
+  template <class U>
   struct quantity {
+
+    static_assert(
+      traits::is_unit_v<U> || traits::is_base_unit_v<U>,
+      "quantity<U> requires a unit");
+
   private:
     double m_value;
 
   public:
-    using unit = make_unit<Ts...>;
+    using unit = make_unit<U>;
     using type = quantity<unit>;
 
     constexpr quantity(const double value = 0) : m_value(value) {};
@@ -25,26 +31,19 @@ namespace units::_details {
     constexpr inline auto convert() const {
       // unit to which this quantity is being converted to
       using other_unit = make_unit<Us...>;
-      
       // assert that this' unit is compatible with the target unit
-      static_assert(
-        std::is_same_v<typename unit::units_product, typename other_unit::units_product>,
-        "Cannot perform conversion between units that are not compatible"
-      );
-
+      static_assert(traits::is_compatible_unit_v<unit, other_unit>, "Cannot perform conversion between units that are not compatible");
       // compute the conversion factor as a ratio
       using conversion_factor = ratio_divide<typename unit::factor, typename other_unit::factor>;
-
       // compute the quantity's value in the other unit
       const double new_value = m_value * double(conversion_factor::num)/double(conversion_factor::den);
-
       // return a quantity in the new units
       return quantity<other_unit>(new_value);
     }
 
-    template <class... Us>
-    constexpr operator quantity<Us...>() const {
-      return convert<Us...>();
+    template <class V>
+    constexpr operator quantity<V>() const {
+      return convert<V>();
     }
 
     // dimensionless quantities are implicitly convertible to double
@@ -56,22 +55,22 @@ namespace units::_details {
     // - assignment operations
 
     // simple assignment to quantity of compatible unit
-    template <class... Us>
-    constexpr inline type& operator=(const quantity<Us...>& other) {
+    template <class V>
+    constexpr inline type& operator=(const quantity<V>& other) {
       m_value = other.template convert<unit>().get_value();
       return *this;
     }
 
     // addition assignemnt with quantity of compatible unit
-    template <class... Us>
-    constexpr inline type& operator+=(const quantity<Us...>& other) {
+    template <class V>
+    constexpr inline type& operator+=(const quantity<V>& other) {
       m_value += other.template convert<unit>().get_value();
       return *this;
     }
 
     // subtraction assignment with quantity of compatible unit
-    template <class... Us>
-    constexpr inline type& operator-=(const quantity<Us...>& other) {
+    template <class V>
+    constexpr inline type& operator-=(const quantity<V>& other) {
       m_value -= other.template convert<unit>().get_value();
       return *this;
     }
@@ -123,29 +122,29 @@ namespace units::_details {
     };
 
     // addition
-    template <class... Us>
-    constexpr inline type operator+(const quantity<Us...>& other) const {
+    template <class V>
+    constexpr inline type operator+(const quantity<V>& other) const {
       return type(get_value() + other.template convert<unit>().get_value());
     }
 
     // subtraction
-    template <class... Us>
-    constexpr inline type operator-(const quantity<Us...>& other) const {
+    template <class V>
+    constexpr inline type operator-(const quantity<V>& other) const {
       return type(get_value() - other.template convert<unit>().get_value());
     }
 
     // multiplication
-    template <class... Us>
-    constexpr inline auto operator*(const quantity<Us...>& other) const {
-      using resulting_type = typename quantity<unit, typename quantity<Us...>::unit>::type;
-      return resulting_type(get_value() * other.get_value());
+    template <class V>
+    constexpr inline auto operator*(const quantity<V>& other) const {
+      using resulting_unit = make_unit<unit, typename quantity<V>::unit>;
+      return quantity<resulting_unit>(get_value() * other.get_value());
     }
 
     // division
-    template <class... Us>
-    constexpr inline auto operator/(const quantity<Us...>& other) const {
-      using resulting_type = typename quantity<unit, inverse<typename quantity<Us...>::unit>>::type;
-      return resulting_type(get_value() * other.get_value());
+    template <class V>
+    constexpr inline auto operator/(const quantity<V>& other) const {
+      using resulting_unit = make_unit<unit, inverse<typename quantity<V>::unit>>;
+      return quantity<resulting_unit>(get_value() / other.get_value());
     }
 
     // multiplication by dimensionless quantity
@@ -162,47 +161,47 @@ namespace units::_details {
 
     // - comparison
 
-    template <class... Us>
-    constexpr inline bool operator==(const quantity<Us...>& other) const {
+    template <class V>
+    constexpr inline bool operator==(const quantity<V>& other) const {
       return get_value() == other.template convert<unit>().get_value();
     };
 
-    template <class... Us>
-    constexpr inline bool operator!=(const quantity<Us...>& other) const {
+    template <class V>
+    constexpr inline bool operator!=(const quantity<V>& other) const {
       return get_value() != other.template convert<unit>().get_value();
     };
 
-    template <class... Us>
-    constexpr inline bool operator<(const quantity<Us...>& other) const {
+    template <class V>
+    constexpr inline bool operator<(const quantity<V>& other) const {
       return get_value() < other.template convert<unit>().get_value();
     };
 
-    template <class... Us>
-    constexpr inline bool operator>(const quantity<Us...>& other) const {
+    template <class V>
+    constexpr inline bool operator>(const quantity<V>& other) const {
       return get_value() > other.template convert<unit>().get_value();
     };
 
-    template <class... Us>
-    constexpr inline bool operator<=(const quantity<Us...>& other) const {
+    template <class V>
+    constexpr inline bool operator<=(const quantity<V>& other) const {
       return get_value() <= other.template convert<unit>().get_value();
     };
 
-    template <class... Us>
-    constexpr inline bool operator>=(const quantity<Us...>& other) const {
+    template <class V>
+    constexpr inline bool operator>=(const quantity<V>& other) const {
       return get_value() >= other.template convert<unit>().get_value();
     };
 
   };
 
   // multiplication by dimensionless from lhs
-  template <class T, class... Ts, class R = typename quantity<Ts...>::type>
-  constexpr inline auto operator*(const T& m, const quantity<Ts...>& q)
-  -> std::enable_if_t< std::is_convertible_v<T, double>, R > {
-    return R(q.get_value() * double(m));
+  template <class T, class U>
+  constexpr inline auto operator*(const T& m, const quantity<U>& q)
+  -> std::enable_if_t< std::is_convertible_v<T, double>, quantity<U> > {
+    return quantity<U>(q.get_value() * double(m));
   };
 
   template <class... Us>
-  using quantity_t = typename quantity<Us...>::type;
+  using quantity_t = quantity< make_unit<Us...> >;
 
 }
 
