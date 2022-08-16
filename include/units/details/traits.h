@@ -47,6 +47,10 @@ namespace units::_details::traits {
   // check if type represents a base unit
   template <class T> struct is_base_unit : std::is_base_of<tags::base_unit, T> {};
   template <class T> constexpr inline bool is_base_unit_v = is_base_unit<T>::value;
+
+  // check if type represents a unit
+  template <class T> struct is_unit : std::is_base_of<tags::unit, T> {};
+  template <class T> constexpr inline bool is_unit_v = is_unit<T>::value;
 }
 
 #endif

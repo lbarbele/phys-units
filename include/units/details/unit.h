@@ -65,7 +65,7 @@ namespace units::_details::_unit {
   // - general unit
 
   template <class S, class... Ts>
-  struct unit {
+  struct unit : tags::unit {
     // assert the scale factor is a ratio
     static_assert(
       traits::is_ratio_v<S>,
