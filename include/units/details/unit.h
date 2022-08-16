@@ -3,6 +3,7 @@
 
 #include <string_view>
 
+#include <units/details/name.h>
 #include <units/details/power.h>
 #include <units/details/ratio.h>
 #include <units/details/traits.h>
@@ -71,22 +72,17 @@ namespace units::_details {
 
     template <class S, class... Ts>
     struct unit : tags::unit {
-    private:
-      static constexpr std::string_view _name() {return "name?";}
-      static constexpr std::string_view _plural() {return "plural_name?";}
-      static constexpr std::string_view _abbrev() {return "abbreviation?";}
 
-    public:
-
+      using type = unit<S, Ts...>;
       using factor = S;
       using units_product = tuple<Ts...>;
 
       template <class... Us> using times = typename make_unit<factor, units_product, Us...>::type;
       template <class... Us> using over = typename make_unit<factor, units_product, inverse<Us>...>::type;
 
-      static constexpr std::string_view name = _name();
-      static constexpr std::string_view plural_name = _plural();
-      static constexpr std::string_view abbreviation = _abbrev();
+      static constexpr std::string_view name = name<type>;
+      static constexpr std::string_view plural = plural<type>;
+      static constexpr std::string_view abbrev = abbrev<type>;
 
       // assert the scale factor is a ratio
       static_assert(
