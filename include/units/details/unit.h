@@ -39,14 +39,18 @@ namespace units::_details::_unit {
   // next parameter is power of raw base unit
   template <intm_t na, intm_t da, class... Ts, unsigned idx, intm_t nb, intm_t db, class... Us>
   struct make_unit< ratio<na, da>, tuple<Ts...>, power< base_unit<idx>, nb, db >, Us... >
-  : make_unit< ratio<na, da>, tuple<Ts..., power_t< base_unit<idx>, nb, db > >, Us... > {};
+  : make_unit< ratio<na, da>, tuple<Ts..., power_t< base_unit<idx>, nb, db > >, Us... > {
+    // ! for consistency, we also disallow powers of raw base units here (see below)
+    static_assert(db == 1, "Fractional powers of base units are not allowed in the creation of units");
+  };
 
   // next parameter is power of unit
-  // ! warning: only integer powers are supported
   template <intm_t na, intm_t da, class... Ts, class S, class... Us, intm_t exp_num, intm_t exp_den, class... Vs>
   struct make_unit< ratio<na, da>, tuple<Ts...>, power< unit<S, Us...>, exp_num, exp_den>, Vs...>
   : make_unit< ratio<na, da>, tuple<Ts...>, ratio_power<S, exp_num>, power_t<Us, exp_num>..., Vs... > {
-    // static_assert(exp_den == 1, "Fractional powers are not allowed");
+    // ! warning: only integer powers are supported
+    // ! the denominator of the exponent is not even considered above
+    static_assert(exp_den == 1, "Fractional powers of units are not allowed in the creation of units");
   };
 
   // base case: scale factor and tuple of powers of base units
