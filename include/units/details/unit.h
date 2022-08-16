@@ -1,6 +1,8 @@
 #ifndef _include_units_details_unit_h
 #define _include_units_details_unit_h
 
+#include <array>
+
 #include <units/details/power.h>
 #include <units/details/ratio.h>
 #include <units/details/traits.h>
@@ -66,6 +68,13 @@ namespace units::_details::_unit {
 
   template <class S, class... Ts>
   struct unit : tags::unit {
+
+    using factor = S;
+    using units_product = tuple<Ts...>;
+
+    template <class... Us> using times = typename make_unit<factor, units_product, Us...>::type;
+    template <class... Us> using over = typename make_unit<factor, units_product, inverse<Us>...>::type;
+
     // assert the scale factor is a ratio
     static_assert(
       traits::is_ratio_v<S>,
@@ -83,14 +92,9 @@ namespace units::_details::_unit {
 
     // assert indices of base units are unique and ordered
     static_assert(
-      (Ts::base::index < ...),
+      std::is_same_v<units_product, tuple_merge_powers_t<units_product>> &&
+      std::is_same_v<units_product, tuple_sort_indexed_t<units_product>>,
       "Indices must be unique and ordered");
-
-    using factor = S;
-    using units_product = tuple<Ts...>;
-
-    template <class... Us> using times = typename make_unit<factor, units_product, Us...>::type;
-    template <class... Us> using over = typename make_unit<factor, units_product, inverse<Us>...>::type;
   };
 }
 
