@@ -1,8 +1,6 @@
 #ifndef _include_units_details_unit_h
 #define _include_units_details_unit_h
 
-#include <array>
-
 #include <units/details/power.h>
 #include <units/details/ratio.h>
 #include <units/details/traits.h>
