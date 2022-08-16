@@ -57,21 +57,21 @@ namespace units::_details {
     // simple assignment to quantity of compatible unit
     template <class V>
     constexpr inline type& operator=(const quantity<V>& other) {
-      m_value = other.template convert<unit>().get_value();
+      m_value = type(other).get_value();
       return *this;
     }
 
     // addition assignemnt with quantity of compatible unit
     template <class V>
     constexpr inline type& operator+=(const quantity<V>& other) {
-      m_value += other.template convert<unit>().get_value();
+      m_value += type(other).get_value();
       return *this;
     }
 
     // subtraction assignment with quantity of compatible unit
     template <class V>
     constexpr inline type& operator-=(const quantity<V>& other) {
-      m_value -= other.template convert<unit>().get_value();
+      m_value -= type(other).get_value();
       return *this;
     }
 
@@ -124,13 +124,13 @@ namespace units::_details {
     // addition
     template <class V>
     constexpr inline type operator+(const quantity<V>& other) const {
-      return type(get_value() + other.template convert<unit>().get_value());
+      return type(get_value() + type(other).get_value());
     }
 
     // subtraction
     template <class V>
     constexpr inline type operator-(const quantity<V>& other) const {
-      return type(get_value() - other.template convert<unit>().get_value());
+      return type(get_value() - type(other).get_value());
     }
 
     // multiplication
@@ -163,32 +163,32 @@ namespace units::_details {
 
     template <class V>
     constexpr inline bool operator==(const quantity<V>& other) const {
-      return get_value() == other.template convert<unit>().get_value();
+      return get_value() == type(other).get_value();
     };
 
     template <class V>
     constexpr inline bool operator!=(const quantity<V>& other) const {
-      return get_value() != other.template convert<unit>().get_value();
+      return get_value() != type(other).get_value();
     };
 
     template <class V>
     constexpr inline bool operator<(const quantity<V>& other) const {
-      return get_value() < other.template convert<unit>().get_value();
+      return get_value() < type(other).get_value();
     };
 
     template <class V>
     constexpr inline bool operator>(const quantity<V>& other) const {
-      return get_value() > other.template convert<unit>().get_value();
+      return get_value() > type(other).get_value();
     };
 
     template <class V>
     constexpr inline bool operator<=(const quantity<V>& other) const {
-      return get_value() <= other.template convert<unit>().get_value();
+      return get_value() <= type(other).get_value();
     };
 
     template <class V>
     constexpr inline bool operator>=(const quantity<V>& other) const {
-      return get_value() >= other.template convert<unit>().get_value();
+      return get_value() >= type(other).get_value();
     };
 
   };
