@@ -66,10 +66,26 @@ namespace units::_details::_unit {
 
   template <class S, class... Ts>
   struct unit {
-    static_assert(traits::is_ratio_v<S>, "Scale factor must be a ratio.");
+    // assert the scale factor is a ratio
     static_assert(
-      std::conjunction_v< traits::is_base_unit<typename power_t<Ts>::base>... >,
-      "Derived units can only be defined in terms of base units.");
+      traits::is_ratio_v<S>,
+      "Scale factor must be a ratio.");
+
+    // assert all other types are powers
+    static_assert(
+      std::conjunction_v<traits::is_power<Ts>...>,
+      "Units must be derived in terms of powers.");
+
+    // assert all powers are of base units
+    static_assert(
+      std::conjunction_v<traits::is_base_unit<typename power_t<Ts>::base>...>,
+      "Only powers of base units are allowed.");
+
+    // assert indices of base units are unique and ordered
+    static_assert(
+      (Ts::base::index < ...),
+      "Indices must be unique and ordered");
+
     using factor = S;
     using units_product = tuple<Ts...>;
 
