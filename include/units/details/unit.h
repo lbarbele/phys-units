@@ -108,6 +108,15 @@ namespace units::_details {
         "Indices must be unique and ordered");
     };
 
+    // specialization wrapping a base unit
+    template <unsigned index>
+    struct unit<ratio<1, 1>, power<base_unit<index>, 1, 1>>
+    : tags::unit, base_unit<index> {
+      using type = unit<ratio<1, 1>, power_t<base_unit<index>>>;
+      using factor = ratio<1, 1>;
+      using units_product = tuple<power_t<base_unit<index>>>;
+    };
+
   }
 
   using _unit::base_unit;
