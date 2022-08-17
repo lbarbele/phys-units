@@ -3,33 +3,48 @@
 
 #include <string_view>
 
-#include <units/details/name.h>
 #include <units/details/power.h>
 #include <units/details/ratio.h>
 #include <units/details/traits.h>
 #include <units/details/tuple.h>
 
-
 namespace units::_details {
 
   namespace _unit {
 
-    // - base unit
+    // - unit names
+    template <class T> constexpr inline std::string_view unit_name("?");
+    template <class T> constexpr inline std::string_view unit_symbol("?");
 
-    template <unsigned index>
-    struct base_unit : tags::base_unit, props::indexed<index> {
-      using type = base_unit<index>;
-      static constexpr std::string_view name = name<type>;
-      static constexpr std::string_view plural = plural<type>;
-      static constexpr std::string_view abbrev = abbrev<type>;
+    template <class T>
+    struct named {
+      static constexpr const auto& name = unit_name<T>;
+      static constexpr const auto& symbol = unit_symbol<T>;
     };
 
-    // - forward-declare the general unit struct
+    // - base unit
+    template <unsigned index>
+    struct base_unit
+    : tags::base_unit, props::indexed<index> {};
 
-    template <class S, class... Ts> struct unit;
+    // - general unit
+    template <class S, class... Ts>
+    struct unit : tags::unit {
+
+      using factor = S;
+      using powers = tuple<Ts...>;
+
+      static constexpr const auto& name = unit_name<unit<S, Ts...>>;
+      static constexpr const auto& symbol = unit_symbol<unit<S, Ts...>>;
+
+      static_assert(traits::is_ratio_v<S>, "Scale factor must be a ratio.");
+      static_assert(std::conjunction_v<traits::is_power<Ts>...>, "Units must be derived in terms of powers.");
+      static_assert(std::conjunction_v<traits::is_base_unit<typename power_t<Ts>::base>...>, "Only powers of base units are allowed.");
+      static_assert(std::is_same_v<powers, tuple_merge_powers_t<powers>>, "Indices must be unique");
+      static_assert(std::is_same_v<powers, tuple_sort_indexed_t<powers>>, "Indices must be ordered");
+    };
 
     // - unit creator
-
     template <class... Ts> struct make_unit;
 
     // next parameter is raw base unit
@@ -51,7 +66,6 @@ namespace units::_details {
     template <intm_t na, intm_t da, class... Ts, unsigned idx, intm_t nb, intm_t db, class... Us>
     struct make_unit< ratio<na, da>, tuple<Ts...>, power< base_unit<idx>, nb, db >, Us... >
     : make_unit< ratio<na, da>, tuple<Ts..., power_t< base_unit<idx>, nb, db > >, Us... > {
-      // ! for consistency, we also disallow powers of raw base units here (see below)
       static_assert(db == 1, "Fractional powers of base units are not allowed in the creation of units");
     };
 
@@ -59,8 +73,6 @@ namespace units::_details {
     template <intm_t na, intm_t da, class... Ts, class S, class... Us, intm_t exp_num, intm_t exp_den, class... Vs>
     struct make_unit< ratio<na, da>, tuple<Ts...>, power< unit<S, Us...>, exp_num, exp_den>, Vs...>
     : make_unit< ratio<na, da>, tuple<Ts...>, ratio_power<S, exp_num>, power_t<Us, exp_num>..., Vs... > {
-      // ! warning: only integer powers are supported
-      // ! the denominator of the exponent is not even considered above
       static_assert(exp_den == 1, "Fractional powers of units are not allowed in the creation of units");
     };
 
@@ -73,57 +85,15 @@ namespace units::_details {
       using type = tuple_convert_t<unit_args, unit>;
     };
 
-    // - general unit
-
-    template <class S, class... Ts>
-    struct unit : tags::unit {
-
-      using type = unit<S, Ts...>;
-      using factor = S;
-      using units_product = tuple<Ts...>;
-
-      static constexpr std::string_view name = name<type>;
-      static constexpr std::string_view plural = plural<type>;
-      static constexpr std::string_view abbrev = abbrev<type>;
-
-      // assert the scale factor is a ratio
-      static_assert(
-        traits::is_ratio_v<S>,
-        "Scale factor must be a ratio.");
-
-      // assert all other types are powers
-      static_assert(
-        std::conjunction_v<traits::is_power<Ts>...>,
-        "Units must be derived in terms of powers.");
-
-      // assert all powers are of base units
-      static_assert(
-        std::conjunction_v<traits::is_base_unit<typename power_t<Ts>::base>...>,
-        "Only powers of base units are allowed.");
-
-      // assert indices of base units are unique and ordered
-      static_assert(
-        std::is_same_v<units_product, tuple_merge_powers_t<units_product>> &&
-        std::is_same_v<units_product, tuple_sort_indexed_t<units_product>>,
-        "Indices must be unique and ordered");
-    };
-
-    // specialization wrapping a base unit
-    template <unsigned index>
-    struct unit<ratio<1, 1>, power<base_unit<index>, 1, 1>>
-    : tags::unit, base_unit<index> {
-      using type = unit<ratio<1, 1>, power_t<base_unit<index>>>;
-      using factor = ratio<1, 1>;
-      using units_product = tuple<power_t<base_unit<index>>>;
-    };
-
   }
 
-  using _unit::base_unit;
   using _unit::unit;
 
   template <class... Ts>
   using make_unit = typename _unit::make_unit<ratio<1, 1>, tuple<>, Ts...>::type;
+
+  template <unsigned i>
+  using make_base_unit = make_unit<_unit::base_unit<i>>;
 }
 
 #endif
