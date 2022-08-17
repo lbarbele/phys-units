@@ -17,7 +17,12 @@ namespace units::_details {
     // - base unit
 
     template <unsigned index>
-    struct base_unit : tags::base_unit, props::indexed<index> {};
+    struct base_unit : tags::base_unit, props::indexed<index> {
+      using type = base_unit<index>;
+      static constexpr std::string_view name = name<type>;
+      static constexpr std::string_view plural = plural<type>;
+      static constexpr std::string_view abbrev = abbrev<type>;
+    };
 
     // - forward-declare the general unit struct
 
@@ -77,9 +82,6 @@ namespace units::_details {
       using factor = S;
       using units_product = tuple<Ts...>;
 
-      template <class... Us> using times = typename make_unit<factor, units_product, Us...>::type;
-      template <class... Us> using over = typename make_unit<factor, units_product, inverse<Us>...>::type;
-
       static constexpr std::string_view name = name<type>;
       static constexpr std::string_view plural = plural<type>;
       static constexpr std::string_view abbrev = abbrev<type>;
@@ -109,6 +111,7 @@ namespace units::_details {
   }
 
   using _unit::base_unit;
+  using _unit::unit;
 
   template <class... Ts>
   using make_unit = typename _unit::make_unit<ratio<1, 1>, tuple<>, Ts...>::type;
