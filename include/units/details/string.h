@@ -4,10 +4,17 @@
 #include <array>
 #include <string_view>
 
-namespace units::_details {
+namespace units::_details { 
 
   // - alias for the standard string view
   using string = std::string_view;
+
+  // - compile-time single-char strings
+  namespace _string {
+    template <char c> constexpr inline char character = c;
+  }
+
+  template <char c> constexpr inline string schar = string(&_string::character<c>, 1);
 
   // - compile-time string joiner
   template <const string&... strings>
@@ -15,9 +22,7 @@ namespace units::_details {
     static constexpr auto as_array = []{
       constexpr std::size_t len = (strings.size() + ... + 0);
       std::array<char, len> arr{};
-      auto append = [i=0, &arr](const auto& s) mutable {
-        for (auto c : s) arr[i++] = c;
-      };
+      auto append = [i=0, &arr](const auto& s) mutable {for (auto c : s) arr[i++] = c;};
       (append(strings),...);
       return arr;
     }();
@@ -27,6 +32,27 @@ namespace units::_details {
 
   template <const string&... strings>
   constexpr inline auto join_v = join<strings...>::value;
+
+  // - join with spaces in between
+  template <const string&... strings> struct spaced_join;
+
+  template <const string& a>
+  struct spaced_join<a> {
+    static constexpr string value = a;
+  };
+
+  template <const string& a, const string& b>
+  struct spaced_join<a, b> {
+    static constexpr string value = join_v<a, schar<' '>, b>;
+  };
+
+  template <const string& a, const string& b, const string&... strings>
+  struct spaced_join<a, b, strings...> {
+    static constexpr string value = spaced_join<spaced_join<a, b>::value, strings...>::value;
+  };
+
+  template <const string& a, const string&... strings>
+  static constexpr inline string spaced_join_v = spaced_join<a, strings...>::value;
 
   // - compile time conversion from unsigned to string
   template <std::intmax_t i, typename = void> struct to_string {
@@ -44,11 +70,9 @@ namespace units::_details {
   template <> struct to_string<8> {static constexpr string value = "8";};
   template <> struct to_string<9> {static constexpr string value = "9";};
 
-  constexpr inline string minus_sign = "-";
-  
   template <std::intmax_t i>
   struct to_string<i, std::enable_if_t<(i < 0)>> {
-    static constexpr string value = join_v<minus_sign, to_string<-i>::value>;
+    static constexpr string value = join_v<schar<'-'>, to_string<-i>::value>;
   };
 
   template <std::intmax_t i>
