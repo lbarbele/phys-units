@@ -29,7 +29,7 @@ namespace units::_details {
   constexpr inline auto join_v = join<strings...>::value;
 
   // - compile time conversion from unsigned to string
-  template <unsigned i> struct to_string {
+  template <std::intmax_t i, typename = void> struct to_string {
     static constexpr string value = join_v<to_string<i/10>::value, to_string<i%10>::value>;
   };
 
@@ -44,7 +44,14 @@ namespace units::_details {
   template <> struct to_string<8> {static constexpr string value = "8";};
   template <> struct to_string<9> {static constexpr string value = "9";};
 
-  template <unsigned i>
+  constexpr inline string minus_sign = "-";
+  
+  template <std::intmax_t i>
+  struct to_string<i, std::enable_if_t<(i < 0)>> {
+    static constexpr string value = join_v<minus_sign, to_string<-i>::value>;
+  };
+
+  template <std::intmax_t i>
   constexpr inline auto to_string_v = to_string<i>::value;
 
 }
