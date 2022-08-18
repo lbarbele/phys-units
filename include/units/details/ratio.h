@@ -6,18 +6,42 @@
 #include <type_traits>
 
 namespace units::_details {
+  // - shorter alias for int max
+  using intm_t = std::intmax_t;
+
+  // - basic ratio
   using std::ratio;
 
+  template <intm_t Num, intm_t Den>
+  using ratio_t = typename ratio<Num, Den>::type;
+
+  // - ratio operations
   using std::ratio_add;
   using std::ratio_subtract;
   using std::ratio_multiply;
   using std::ratio_divide;
 
-  using intm_t = std::intmax_t;
+  // - prefixes
+  inline namespace prefixes {
+    using std::atto;
+    using std::femto;
+    using std::pico;
+    using std::nano;
+    using std::micro;
+    using std::milli;
+    using std::centi;
+    using std::deci;
+    using std::deca;
+    using std::hecto;
+    using std::kilo;
+    using std::mega;
+    using std::giga;
+    using std::tera;
+    using std::peta;
+    using std::exa;
+  }
 
-  template <intm_t Num, intm_t Den>
-  using ratio_t = typename ratio<Num, Den>::type;
-
+  // - ratio power implementation
   namespace _ratio {
 
     template <class R, intm_t exp, typename = void>
