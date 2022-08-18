@@ -63,10 +63,12 @@ namespace units::_details {
   using power_t = typename power<T, num, den>::type;
 
   // aliases for some common powers
-  template <class T> using power_null = power_t<T, 0>;
-  template <class T> using inverse = power_t<T, -1>;
-  template <class T> using squared = power_t<T, 2>;
-  template <class T> using inverse_squared = power_t<T, -2>;
+  inline namespace common_powers {
+    template <class T> using power_null = power_t<T, 0>;
+    template <class T> using inverse = power_t<T, -1>;
+    template <class T> using squared = power_t<T, 2>;
+    template <class T> using inverse_squared = power_t<T, -2>;
+  }
 
   // alias for power multiplication
   template <class P, class... Ps>
