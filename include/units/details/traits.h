@@ -7,8 +7,10 @@
 
 namespace units::_details::tags {
   struct power {};
-  struct base_unit {};
   struct unit {};
+  struct base_unit : unit {};
+  struct derived_unit : unit {};
+  struct dimensionless_unit : unit {};
 }
 
 namespace units::_details::props {
@@ -55,6 +57,13 @@ namespace units::_details::traits {
   // check if units are compatible
   template <class T, class U> struct is_compatible_unit : std::is_same<typename T::units_product, typename U::units_product> {};
   template <class T, class U> constexpr inline bool is_compatible_unit_v = is_compatible_unit<T, U>::value;
+
+  // assert unsigned numbers are sorted and unique
+  template <unsigned... is> struct is_sorted_and_unique : std::bool_constant<(... < is)> {}; // >
+  template <> struct is_sorted_and_unique<> : std::true_type {};
+  template <unsigned a> struct is_sorted_and_unique<a> : std::true_type {};
+
+  template <unsigned... is> constexpr inline bool is_sorted_and_unique_v = is_sorted_and_unique<is...>::value;
 }
 
 #endif
