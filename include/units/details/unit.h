@@ -1,99 +1,121 @@
 #ifndef _include_units_details_unit_h
 #define _include_units_details_unit_h
 
+#include <array>
 #include <string_view>
 
 #include <units/details/power.h>
 #include <units/details/ratio.h>
+#include <units/details/string.h>
 #include <units/details/traits.h>
 #include <units/details/tuple.h>
 
 namespace units::_details {
 
   namespace _unit {
+    // - summary/forward declarations
+    template <class... Ts> struct unit;
+    template <class... Ts> struct unit_tag;
+    template <class... Ts> struct unit_create;
+    template <unsigned id> struct unit_indexed;
 
-    // - unit names
-    template <class T> constexpr inline std::string_view unit_name("?");
-    template <class T> constexpr inline std::string_view unit_symbol("?");
+    // - helper aliases
+    using one = ratio<1, 1>;
+    
+    template <unsigned id, intm_t num = 1, intm_t den = 1>
+    using unit_indexed_power = power<unit_indexed<id>, num, den>;
+    
+    template <unsigned id> 
+    using base_unit = unit<one, unit_indexed_power<id>>;
 
-    template <class T>
-    struct named {
-      static constexpr const auto& name = unit_name<T>;
-      static constexpr const auto& symbol = unit_symbol<T>;
-    };
+    // - the indexed unit: appends an index to a base unit
+    template <unsigned id> struct unit_indexed : props::indexed<id>, base_unit<id> {};
 
-    // - base unit
-    template <unsigned index>
-    struct base_unit
-    : tags::base_unit, props::indexed<index> {};
+    // - tag for the unit class
+    template <intm_t num, intm_t den>
+    struct unit_tag<ratio<num, den>>
+    : tags::dimensionless_unit {};
 
-    // - general unit
-    template <class S, class... Ts>
-    struct unit : tags::unit {
+    template <unsigned id>
+    struct unit_tag<one, unit_indexed_power<id>>
+    : tags::base_unit {};
 
-      using factor = S;
-      using powers = tuple<Ts...>;
+    template <intm_t num, intm_t den, class T, class... Ts>
+    struct unit_tag<ratio<num, den>, T, Ts...>
+    : tags::derived_unit {};
 
-      static constexpr const auto& name = unit_name<unit<S, Ts...>>;
-      static constexpr const auto& symbol = unit_symbol<unit<S, Ts...>>;
+    // - name/symbol for the unit class
+    template <class T> constexpr inline string unit_name = "?";
+    template <class T> constexpr inline string unit_symbol = "?";
 
-      static_assert(traits::is_ratio_v<S>, "Scale factor must be a ratio.");
-      static_assert(std::conjunction_v<traits::is_power<Ts>...>, "Units must be derived in terms of powers.");
-      static_assert(std::conjunction_v<traits::is_base_unit<typename power_t<Ts>::base>...>, "Only powers of base units are allowed.");
-      static_assert(std::is_same_v<powers, tuple_merge_powers_t<powers>>, "Indices must be unique");
-      static_assert(std::is_same_v<powers, tuple_sort_indexed_t<powers>>, "Indices must be ordered");
+    // string for a power using numerador and denominator of exponent
+    template <intm_t num, intm_t den>
+    constexpr inline string str_pow = 
+      (num == 1 && den == 1)? "" :
+      (den == 1)? join_v<schar<'^'>, to_string_v<num>> :
+      join_v<schar<'^'>, schar<'('>, to_string_v<num>, schar<'/'>, to_string_v<den>, schar<')'>>;
+
+    // string of base unit name raised to given power
+    template <unsigned id, intm_t num, intm_t den>
+    constexpr inline string str_name_pow = join_v<unit_name<base_unit<id>>, str_pow<num, den>>;
+
+    // string of base unit symbol raised to given power
+    template <unsigned id, intm_t num, intm_t den>
+    constexpr inline string str_symbol_pow = join_v<unit_symbol<base_unit<id>>, str_pow<num, den>>;
+
+    // - unit class
+    template <intm_t num, intm_t den, unsigned... ids, intm_t... nums, intm_t... dens>
+    struct unit< ratio<num, den>, unit_indexed_power<ids, nums, dens>... >
+    : unit_tag<ratio<num, den>, unit_indexed_power<ids, nums, dens>... > {
+      using type = unit;
+      using factor = ratio<num, den>;
+      static constexpr string name = 
+        (unit_name<type> != "?")? unit_name<type> : spaced_join_v<str_name_pow<ids, nums, dens>...>;
+
+      static constexpr string symbol = (unit_symbol<type> != "?")? unit_symbol<type> : spaced_join_v<str_symbol_pow<ids, nums, dens>...>;
+
+      static_assert(traits::is_sorted_and_unique_v<ids...>);
+      static_assert(((nums != 0) && ...));
+      static_assert(((dens != 0) && ...));
     };
 
     // - unit creator
-    template <class... Ts> struct make_unit;
-
-    // next parameter is raw base unit
-    template <intm_t num, intm_t den, class... Ts, unsigned idx, class... Us>
-    struct make_unit< ratio<num, den>, tuple<Ts...>, base_unit<idx>, Us... >
-    : make_unit< ratio<num, den>, tuple<Ts..., power_t<base_unit<idx>>>, Us... > {};
-
-    // next parameter is scale factor (a ratio)
+    // next parameter is a ratio
     template <intm_t na, intm_t da, class... Ts, intm_t nb, intm_t db, class... Us>
-    struct make_unit<ratio<na, da>, tuple<Ts...>, ratio<nb, db>, Us...>
-    : make_unit<ratio_multiply<ratio<na, da>, ratio<nb, db>>, tuple<Ts...>, Us...> {};
+    struct unit_create<ratio<na, da>, tuple<Ts...>, ratio<nb, db>, Us...>
+    : unit_create< ratio_multiply<ratio<na, da>, ratio<nb, db>>, tuple<Ts...>, Us...> {};
 
-    // next parameter is another unit (not a base unit)
+    // next parameter is a unit
     template <intm_t num, intm_t den, class... Ts, class S, class... Us, class... Vs>
-    struct make_unit<ratio<num, den>, tuple<Ts...>, unit<S, Us...>, Vs...>
-    : make_unit< ratio_multiply<ratio<num, den>, S>, tuple<Ts..., Us...>, Vs... > {};
+    struct unit_create<ratio<num, den>, tuple<Ts...>, unit<S, Us...>, Vs...>
+    : unit_create< ratio_multiply<ratio<num, den>, S>, tuple<Ts..., Us...>, Vs... > {};
 
-    // next parameter is power of raw base unit
-    template <intm_t na, intm_t da, class... Ts, unsigned idx, intm_t nb, intm_t db, class... Us>
-    struct make_unit< ratio<na, da>, tuple<Ts...>, power< base_unit<idx>, nb, db >, Us... >
-    : make_unit< ratio<na, da>, tuple<Ts..., power_t< base_unit<idx>, nb, db > >, Us... > {
-      static_assert(db == 1, "Fractional powers of base units are not allowed in the creation of units");
-    };
-
-    // next parameter is power of unit
+    // next parameter is (integer) power of unit
     template <intm_t na, intm_t da, class... Ts, class S, class... Us, intm_t exp_num, intm_t exp_den, class... Vs>
-    struct make_unit< ratio<na, da>, tuple<Ts...>, power< unit<S, Us...>, exp_num, exp_den>, Vs...>
-    : make_unit< ratio<na, da>, tuple<Ts...>, ratio_power<S, exp_num>, power_t<Us, exp_num>..., Vs... > {
+    struct unit_create< ratio<na, da>, tuple<Ts...>, power< unit<S, Us...>, exp_num, exp_den>, Vs...>
+      : unit_create< ratio<na, da>, tuple<Ts...>, unit<ratio_power<S, exp_num>, power_t<Us, exp_num>...>, Vs... > {
       static_assert(exp_den == 1, "Fractional powers of units are not allowed in the creation of units");
     };
 
-    // base case: scale factor and tuple of powers of base units
+    // base case
     template <intm_t num, intm_t den, class... Ts>
-    struct make_unit< ratio<num, den>, tuple<Ts...> > {
+    struct unit_create< ratio<num, den>, tuple<Ts...> > {
       using merged = tuple_merge_powers_t<tuple<Ts...>>;
       using sorted = tuple_sort_indexed_t<merged>;
       using unit_args = tuple_concat<tuple<ratio<num, den>>, sorted>;
       using type = tuple_convert_t<unit_args, unit>;
     };
-
   }
 
+  // * general unit class
   using _unit::unit;
 
-  template <class... Ts>
-  using make_unit = typename _unit::make_unit<ratio<1, 1>, tuple<>, Ts...>::type;
+  // * alias for base units (parametrized by id, which is of type uint)
+  using _unit::base_unit;
 
-  template <unsigned i>
-  using make_base_unit = make_unit<_unit::base_unit<i>>;
+  // * helper type that creates units
+  template <class... Ts>
+  using make_unit = typename _unit::unit_create<ratio<1, 1>, tuple<>, Ts...>::type;
 }
 
 #endif
