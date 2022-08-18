@@ -36,6 +36,11 @@ namespace units::_details {
   // - join with spaces in between
   template <const string&... strings> struct spaced_join;
 
+  template <>
+  struct spaced_join<> {
+    static constexpr string value = "";
+  };
+
   template <const string& a>
   struct spaced_join<a> {
     static constexpr string value = a;
