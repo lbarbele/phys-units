@@ -1,7 +1,11 @@
 #ifndef _include_units_details_quantity_h
 #define _include_units_details_quantity_h
 
+#include <ostream>
+#include <string>
+
 #include <units/details/power.h>
+#include <units/details/ratio.h>
 #include <units/details/traits.h>
 #include <units/details/unit.h>
 
@@ -202,6 +206,15 @@ namespace units::_details {
 
   template <class... Us>
   using quantity_t = quantity< make_unit<Us...> >;
+
+  // - print function
+  template<class CharT, class Traits, class Unit>
+  std::basic_ostream<CharT, Traits>& operator<<(
+    std::basic_ostream<CharT, Traits>& os,
+    const quantity<Unit>& q
+  ) {
+    return os << q.get_value() * double(Unit::factor::num) / double(Unit::factor::den) << " " << Unit::symbol;
+  }
 
 }
 
