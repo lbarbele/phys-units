@@ -197,15 +197,12 @@ namespace units::_details {
 
   };
 
-  // multiplication by dimensionless from lhs
+  // - multiplication by dimensionless from lhs
   template <class T, class U>
   constexpr inline auto operator*(const T& m, const quantity<U>& q)
   -> std::enable_if_t< std::is_convertible_v<T, double>, quantity<U> > {
     return quantity<U>(q.get_value() * double(m));
   };
-
-  template <class... Us>
-  using quantity_t = quantity< make_unit<Us...> >;
 
   // - print function
   template<class CharT, class Traits, class Unit>
@@ -213,7 +210,7 @@ namespace units::_details {
     std::basic_ostream<CharT, Traits>& os,
     const quantity<Unit>& q
   ) {
-    return os << q.get_value() * double(Unit::factor::num) / double(Unit::factor::den) << " " << Unit::symbol;
+    return os << q.get_value() << " " << Unit::name;
   }
 
 }

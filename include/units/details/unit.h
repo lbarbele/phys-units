@@ -48,6 +48,13 @@ namespace units::_details {
     template <class T> constexpr inline string unit_name = "?";
     template <class T> constexpr inline string unit_symbol = "?";
 
+    // create a string from the multiplicative factor
+    template <intm_t num, intm_t den>
+    constexpr inline string str_factor =
+      (num == 1 && den == 1)? "" :
+      (den == 1)? join_v<schar<'*'>, schar<' '>, to_string_v<num>> :
+      join_v<schar<'*'>, schar<' '>, schar<'('>, to_string_v<num>, schar<'/'>, to_string_v<den>, schar<')'>>;
+
     // string for a power using numerador and denominator of exponent
     template <intm_t num, intm_t den>
     constexpr inline string str_pow = 
@@ -67,12 +74,25 @@ namespace units::_details {
     template <intm_t num, intm_t den, unsigned... ids, intm_t... nums, intm_t... dens>
     struct unit< ratio<num, den>, unit_indexed_power<ids, nums, dens>... >
     : unit_tag<ratio<num, den>, unit_indexed_power<ids, nums, dens>... > {
+      using without_prefix = unit<one, unit_indexed_power<ids, nums, dens>...>;
       using type = unit;
       using factor = ratio<num, den>;
-      static constexpr string name = 
-        (unit_name<type> != "?")? unit_name<type> : spaced_join_v<str_name_pow<ids, nums, dens>...>;
 
-      static constexpr string symbol = (unit_symbol<type> != "?")? unit_symbol<type> : spaced_join_v<str_symbol_pow<ids, nums, dens>...>;
+      static constexpr string name =
+        // name for this unit is explicitly defined
+        (unit_name<type> != "?")? unit_name<type> :
+        // explicit name for the corresponding unit without the ratio
+        (unit_name<without_prefix> != "?")? spaced_join_v<str_factor<num, den>, unit_name<without_prefix>> :
+        // can only write unit in terms of its base units
+        spaced_join_v<str_factor<num, den>, str_name_pow<ids, nums, dens>...>;
+
+      static constexpr string symbol =
+        // symbol for this unit is explicitly defined
+        (unit_symbol<type> != "?")? unit_symbol<type> :
+        // explicit symbol for the corresponding unit without the ratio
+        (unit_symbol<without_prefix> != "?")? spaced_join_v<str_factor<num, den>, unit_symbol<without_prefix>> :
+        // can only write unit in terms of its base units
+        spaced_join_v<str_factor<num, den>, str_symbol_pow<ids, nums, dens>...>;
 
       static_assert(traits::is_sorted_and_unique_v<ids...>);
       static_assert(((nums != 0) && ...));
