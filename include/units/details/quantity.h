@@ -210,7 +210,7 @@ namespace units::_details {
     std::basic_ostream<CharT, Traits>& os,
     const quantity<Unit>& q
   ) {
-    return os << q.get_value() << " " << Unit::name;
+    return os << q.get_value() << " " << Unit::symbol;
   }
 
 }
