@@ -1,5 +1,5 @@
 # setup project information
-project('phys-units', 'cpp', default_options: ['cpp_std=c++17'])
+project('phys-units', 'cpp', default_options: ['cpp_std=c++20'])
 # setup base include directory
 include_dir = include_directories('include')
 # add subdirectories
