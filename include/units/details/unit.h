@@ -77,6 +77,7 @@ namespace units::_details {
       using without_prefix = unit<one, unit_indexed_power<ids, nums, dens>...>;
       using type = unit;
       using factor = ratio<num, den>;
+      using powers = tuple<unit_indexed_power<ids, nums, dens>...>;
 
       static constexpr string name =
         // name for this unit is explicitly defined

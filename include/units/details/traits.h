@@ -55,7 +55,7 @@ namespace units::_details::traits {
   template <class T> constexpr inline bool is_unit_v = is_unit<T>::value;
 
   // check if units are compatible
-  template <class T, class U> struct is_compatible_unit : std::is_same<typename T::units_product, typename U::units_product> {};
+  template <class T, class U> struct is_compatible_unit : std::is_same<typename T::powers, typename U::powers> {};
   template <class T, class U> constexpr inline bool is_compatible_unit_v = is_compatible_unit<T, U>::value;
 
   // assert unsigned numbers are sorted and unique
