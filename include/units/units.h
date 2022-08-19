@@ -71,24 +71,26 @@ namespace units {
   units_add_base_unit(6,   candela,  cd);
   units_add_base_unit(7,    radian, rad);
   units_add_base_unit(8, steradian,  sr);
+  units_add_base_unit(9,     decay, dec);
 
   // - define SI derived units
-  units_add_derived_unit(  hertz,  Hz, make_unit<inverse<second>>);
-  units_add_derived_unit( newton,   N, make_unit<kilogram, meter, inverse_squared<second>>);
-  units_add_derived_unit( pascal,  Pa, make_unit<newton, inverse_squared<meter>>);
-  units_add_derived_unit(  joule,   J, make_unit<newton, meter>);
-  units_add_derived_unit(   watt,   W, make_unit<joule, inverse<second>>);
-  units_add_derived_unit(coulomb,   C, make_unit<ampere, second>);
-  units_add_derived_unit(   volt,   V, make_unit<joule, inverse<coulomb>>);
-  units_add_derived_unit(  farad,   F, make_unit<coulomb, inverse<volt>>);
-  units_add_derived_unit(    ohm, Ohm, make_unit<volt, inverse<ampere>>);
-  units_add_derived_unit(siemens,   S, make_unit<inverse<ohm>>);
-  units_add_derived_unit(  weber,  Wb, make_unit<volt, second>);
-  units_add_derived_unit(  tesla,   T, make_unit<weber, inverse_squared<m>>);
-  units_add_derived_unit(  henry,   H, make_unit<weber, inverse<ampere>>);
-  units_add_derived_unit(  lumen,  lm, make_unit<candela, steradian>);
-  units_add_derived_unit(    lux,  lx, make_unit<lumen, inverse_squared<meter>>);
-  units_add_derived_unit(  katal, kat, make_unit<mole, inverse<second>>);
+  units_add_derived_unit(    hertz,  Hz, make_unit<inverse<second>>);
+  units_add_derived_unit(   newton,   N, make_unit<kilogram, meter, inverse_squared<second>>);
+  units_add_derived_unit(   pascal,  Pa, make_unit<newton, inverse_squared<meter>>);
+  units_add_derived_unit(    joule,   J, make_unit<newton, meter>);
+  units_add_derived_unit(     watt,   W, make_unit<joule, inverse<second>>);
+  units_add_derived_unit(  coulomb,   C, make_unit<ampere, second>);
+  units_add_derived_unit(     volt,   V, make_unit<joule, inverse<coulomb>>);
+  units_add_derived_unit(    farad,   F, make_unit<coulomb, inverse<volt>>);
+  units_add_derived_unit(      ohm, Ohm, make_unit<volt, inverse<ampere>>);
+  units_add_derived_unit(  siemens,   S, make_unit<inverse<ohm>>);
+  units_add_derived_unit(    weber,  Wb, make_unit<volt, second>);
+  units_add_derived_unit(    tesla,   T, make_unit<weber, inverse_squared<m>>);
+  units_add_derived_unit(    henry,   H, make_unit<weber, inverse<ampere>>);
+  units_add_derived_unit(    lumen,  lm, make_unit<candela, steradian>);
+  units_add_derived_unit(      lux,  lx, make_unit<lumen, inverse_squared<meter>>);
+  units_add_derived_unit(becquerel,  Bq, make_unit<decay, inverse<second>>);
+  units_add_derived_unit(    katal, kat, make_unit<mole, inverse<second>>);
 }
 
 #endif
