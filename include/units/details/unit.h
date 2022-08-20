@@ -98,6 +98,7 @@ namespace units::_details {
       static_assert(traits::is_sorted_and_unique_v<ids...>);
       static_assert(((nums != 0) && ...));
       static_assert(((dens != 0) && ...));
+      static_assert(std::is_same_v<factor, one> || (sizeof...(ids) > 0));
     };
 
     // - unit creator
