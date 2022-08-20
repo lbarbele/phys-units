@@ -51,6 +51,10 @@ namespace units::_details::traits {
   template <class T> struct is_base_unit : std::is_base_of<tags::base_unit, T> {};
   template <class T> constexpr inline bool is_base_unit_v = is_base_unit<T>::value;
 
+  // check if type represents a dimensionless unit
+  template <class T> struct is_dimensionless_unit : std::is_base_of<tags::dimensionless_unit, T> {};
+  template <class T> constexpr inline bool is_dimensionless_unit_v = is_dimensionless_unit<T>::value;
+
   // check if type represents a unit
   template <class T> struct is_unit : std::is_base_of<tags::unit, T> {};
   template <class T> constexpr inline bool is_unit_v = is_unit<T>::value;
@@ -73,6 +77,9 @@ namespace units::_details::req {
 
   template <class T, class U>
   concept compatible_units = traits::is_compatible_unit_v<T, U>;
+
+  template <class T>
+  concept dimensionless_unit = traits::is_dimensionless_unit_v<T>;
 }
 
 #endif
