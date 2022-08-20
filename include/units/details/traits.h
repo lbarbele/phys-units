@@ -21,11 +21,6 @@ namespace units::_details::props {
   };
 }
 
-namespace units::_details::req {
-  template <class T>
-  concept arithmetic = std::is_integral_v<T> || std::is_floating_point_v<T>;
-}
-
 namespace units::_details::traits {
   // check if type is indexed (conatins ::index static member of integer type)
   template <class T, class Enabler = void>
@@ -70,6 +65,14 @@ namespace units::_details::traits {
   template <unsigned a> struct is_sorted_and_unique<a> : std::true_type {};
 
   template <unsigned... is> constexpr inline bool is_sorted_and_unique_v = is_sorted_and_unique<is...>::value;
+}
+
+namespace units::_details::req {
+  template <class T>
+  concept arithmetic = std::is_integral_v<T> || std::is_floating_point_v<T>;
+
+  template <class T, class U>
+  concept compatible_units = traits::is_compatible_unit_v<T, U>;
 }
 
 #endif
