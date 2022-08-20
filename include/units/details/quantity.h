@@ -81,7 +81,7 @@ namespace units::_details {
       return T(m_value);
     };
 
-    // - assignment operations for quantities of compatible units
+    // * assignment operations for quantities of compatible units
 
     // simple assignment
     constexpr type& operator=(const req::quantity auto& other) {
@@ -112,7 +112,7 @@ namespace units::_details {
       return *this;
     }
 
-    // - assignment operations for dimensionless quantities
+    // * assignment operations for dimensionless quantities
 
     // simple assignment
     constexpr type& operator=(const req::arithmetic auto& value)
@@ -134,7 +134,7 @@ namespace units::_details {
       return *this;
     }
 
-    // - increment/decrement operations
+    // * increment/decrement operations
 
     constexpr type& operator++() {
       ++m_value;
@@ -154,7 +154,7 @@ namespace units::_details {
       return type(m_value--);
     }
 
-    // - arithmetic operations
+    // * arithmetic operations
 
     // unary plus
     constexpr type operator+() const {
@@ -210,7 +210,7 @@ namespace units::_details {
       return quantity<unit_type, decltype(value)>(value);
     }
 
-    // - comparison
+    // * comparison
 
     constexpr bool operator==(const req::quantity auto& other) const {
       return get_value() == type(other).get_value();
@@ -239,6 +239,7 @@ namespace units::_details {
   };
 
   // - multiplication by dimensionless from lhs
+
   constexpr auto operator*(const req::arithmetic auto& x, const req::quantity auto& q) {
     auto value = q.get_value() * x;
     using unit_type = typename std::decay_t<decltype(q)>::unit_type;
@@ -247,6 +248,7 @@ namespace units::_details {
   };
 
   // - print function
+  
   template<class CharT, class Traits, class U, class V>
   std::basic_ostream<CharT, Traits>& operator<<(
     std::basic_ostream<CharT, Traits>& os,
