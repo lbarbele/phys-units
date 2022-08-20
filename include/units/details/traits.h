@@ -75,6 +75,9 @@ namespace units::_details::req {
   template <class T>
   concept arithmetic = std::is_integral_v<T> || std::is_floating_point_v<T>;
 
+  template <class T>
+  concept unit = traits::is_unit_v<T>;
+
   template <class T, class U>
   concept compatible_units = traits::is_compatible_unit_v<T, U>;
 
