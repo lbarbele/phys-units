@@ -21,7 +21,7 @@ namespace units::_details::props {
   };
 }
 
-namespace units::_details::concepts {
+namespace units::_details::req {
   template <class T>
   concept arithmetic = std::is_integral_v<T> || std::is_floating_point_v<T>;
 }
