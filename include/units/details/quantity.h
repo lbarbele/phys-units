@@ -62,6 +62,10 @@ namespace units::_details {
       return *this;
     }
 
+    constexpr type set_value(const req::arithmetic auto& value) const {
+      return type(value);
+    }
+
     // * unit (type) conversion
 
     template <req::compatible_units<unit_type> U, req::arithmetic V>
@@ -248,7 +252,7 @@ namespace units::_details {
   };
 
   // - print function
-  
+
   template<class CharT, class Traits, class U, class V>
   std::basic_ostream<CharT, Traits>& operator<<(
     std::basic_ostream<CharT, Traits>& os,
