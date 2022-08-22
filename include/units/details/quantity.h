@@ -19,6 +19,7 @@ namespace units::_details {
   // - traits regarting quantities
 
   namespace traits {
+    // * assert type is a quantity
     template <class T>
     struct is_quantity : std::false_type {};
 
@@ -28,6 +29,7 @@ namespace units::_details {
     template <class T>
     constexpr inline bool is_quantity_v = is_quantity<T>::value;
 
+    // * assert type is quantity and value is integral
     template <class T>
     struct is_integral_quantity : std::false_type {};
 
@@ -36,6 +38,16 @@ namespace units::_details {
 
     template <class Q>
     constexpr inline bool is_integral_quantity_v = is_integral_quantity<Q>::value;
+
+    // * assert type is a quantity and value is floating point
+    template <class T>
+    struct is_floating_point_quantity : std::false_type {};
+
+    template <req::unit U, std::floating_point V>
+    struct is_floating_point_quantity<quantity<U, V>> : std::true_type {};
+
+    template <class Q>
+    constexpr inline bool is_floating_point_quantity_v = is_floating_point_quantity<Q>::value;
   }
 
   // - concept of a quantity
@@ -49,6 +61,9 @@ namespace units::_details {
 
     template <class Q>
     concept integral_quantity = traits::is_integral_quantity_v<Q>;
+
+    template <class Q>
+    concept floating_point_quantity = traits::is_floating_point_quantity_v<Q>;
   }
 
   // - definition of the quantity class
