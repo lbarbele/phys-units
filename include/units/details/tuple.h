@@ -43,7 +43,10 @@ namespace units::_details {
     using merged = power_multiply< U,
       std::conditional_t< std::is_same_v<base, typename power_t<Us>::base>, Us, power_null<base> >... >;
 
-    using type = typename tuple_merge_powers<remaining, tuple<Ts..., merged>>::type;
+    using type = std::conditional_t<
+      (merged::exponent::num != 0),
+      typename tuple_merge_powers<remaining, tuple<Ts..., merged>>::type,
+      typename tuple_merge_powers<remaining, tuple<Ts...>>::type>;
   };
 
   template <class... Ts>
