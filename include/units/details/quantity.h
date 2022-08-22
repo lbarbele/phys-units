@@ -116,16 +116,27 @@ namespace units::_details {
     }
 
     // * unit (type) conversion
-
-    template <req::unit_compatible<unit_type> U, req::arithmetic V = value_type>
+    template <req::unit_compatible<unit_type> U>
+    requires req::floating_point_quantity<type>
     constexpr auto convert() const {
       using factor = ratio_divide<typename unit_type::factor, typename U::factor>;
-      return quantity<U, V>(V(m_value) * V(factor::num)/V(factor::den));
+      return quantity<U, value_type>(m_value * ratio_value<factor, value_type>); 
+    }
+
+    template <req::unit_compatible<unit_type> U>
+    requires req::integral_quantity<type>
+    constexpr auto convert() const {
+      using factor = ratio_divide<typename unit_type::factor, typename U::factor>;
+      if constexpr (factor::num == factor::den)
+        return quantity<U, value_type>(m_value);
+      else // ! promote value type to long double
+        return quantity<U, long double>(m_value * ratio_value<factor, long double>);
     }
 
     template <req::unit_compatible<unit_type> U, req::arithmetic V>
     constexpr operator quantity<U, V>() const {
-      return convert<U, V>();
+      using factor = ratio_divide<typename unit_type::factor, typename U::factor>;
+      return quantity<U, V>(m_value * ratio_value<factor, V>);
     }
 
     template <std::constructible_from<value_type> T>
@@ -138,17 +149,17 @@ namespace units::_details {
 
     // simple assignment
     constexpr type& operator=(const req::quantity auto q) {
-      return set_value(type(q).get_value());
+      return set_value(q.template convert<unit_type>().get_value());
     }
 
     // addition assignment
     constexpr type& operator+=(const req::quantity auto q) {
-      return set_value(get_value() + type(q).get_value());
+      return set_value(get_value() + q.template convert<unit_type>().get_value());
     }
 
     // subtraction assignment
     constexpr type& operator-=(const req::quantity auto q) {
-      return set_value(get_value() - type(q).get_value());
+      return set_value(get_value() - q.template convert<unit_type>().get_value());
     }
 
     // multiplication assignment by dimensionless object
@@ -247,42 +258,42 @@ namespace units::_details {
       return quantity<unit_type, decltype(get_value()/x)>(get_value()/x);
     }
 
-    // modulo operation by integral type (onlu for integral quantities)
+    // modulo operation by integral type (only for integral quantities)
     constexpr auto operator%(const std::integral auto i) const
     requires req::integral_quantity<type> {
-      return decltype(*this/i)(get_value()%i);
+      return decltype(type{}/i)(get_value()%i);
     }
 
     // modulo operation by another integral quantity
     constexpr auto operator%(const req::integral_quantity auto q) const
     requires req::integral_quantity<type> {
-      return decltype(*this/q)(get_value() % q.get_value());
+      return decltype(type{}/q)(get_value() % q.get_value());
     }
 
     // * comparison
 
     constexpr bool operator==(const req::quantity auto q) const {
-      return get_value() == type(q).get_value();
+      return get_value() == q.template convert<unit_type>().get_value();
     }
 
     constexpr bool operator!=(const req::quantity auto q) const {
-      return get_value() != type(q).get_value();
+      return get_value() != q.template convert<unit_type>().get_value();
     }
 
     constexpr bool operator<(const req::quantity auto q) const {
-      return get_value() < type(q).get_value();
+      return get_value() < q.template convert<unit_type>().get_value();
     }
 
     constexpr bool operator>(const req::quantity auto q) const {
-      return get_value() > type(q).get_value();
+      return get_value() > q.template convert<unit_type>().get_value();
     }
 
     constexpr bool operator<=(const req::quantity auto q) const {
-      return get_value() <= type(q).get_value();
+      return get_value() <= q.template convert<unit_type>().get_value();
     }
 
     constexpr bool operator>=(const req::quantity auto q) const {
-      return get_value() >= type(q).get_value();
+      return get_value() >= q.template convert<unit_type>().get_value();
     }
 
   };
