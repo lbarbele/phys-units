@@ -21,6 +21,10 @@ namespace units::_details {
   using std::ratio_multiply;
   using std::ratio_divide;
 
+  // - compute ratio value
+  template <class R, class V>
+  constexpr inline V ratio_value(V(R::num)/V(R::den));
+
   // - prefixes
   inline namespace prefixes {
     using std::atto;
