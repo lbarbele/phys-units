@@ -66,8 +66,10 @@ namespace units::_details {
     template <class T>
     concept quantity = traits::is_quantity_v<T>;
 
-    template <class T, class U>
-    concept quantity_compatible = traits::is_compatible_unit_v<typename T::unit_type, typename U::unit_type>;
+    template <class T, class U, class... Us>
+    concept quantity_compatible = std::conjunction_v<
+      traits::is_compatible_unit<typename T::unit_type, typename U::unit_type>,
+      traits::is_compatible_unit<typename T::unit_type, typename Us::unit_type>...>;
 
     template <class Q>
     concept integral_quantity = traits::is_integral_quantity_v<Q>;
