@@ -48,6 +48,16 @@ namespace units::_details {
 
     template <class Q>
     constexpr inline bool is_floating_point_quantity_v = is_floating_point_quantity<Q>::value;
+
+    // * assert quantity is dimensionless
+    template <class T>
+    struct is_dimensionless_quantity : std::false_type {};
+
+    template <req::dimensionless_unit U, std::floating_point V>
+    struct is_dimensionless_quantity<quantity<U, V>> : std::true_type {};
+
+    template <class Q>
+    constexpr inline bool is_dimensionless_quantity_v = is_dimensionless_quantity<Q>::value;
   }
 
   // - concept of a quantity
@@ -64,6 +74,9 @@ namespace units::_details {
 
     template <class Q>
     concept floating_point_quantity = traits::is_floating_point_quantity_v<Q>;
+
+    template <class Q>
+    concept dimensionless_quantity = traits::is_dimensionless_quantity_v<Q>;
   }
 
   // - definition of the quantity class
