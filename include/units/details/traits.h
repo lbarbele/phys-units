@@ -79,7 +79,7 @@ namespace units::_details::req {
   concept unit = traits::is_unit_v<T>;
 
   template <class T, class U>
-  concept compatible_units = traits::is_compatible_unit_v<T, U>;
+  concept unit_compatible = traits::is_compatible_unit_v<T, U>;
 
   template <class T>
   concept dimensionless_unit = traits::is_dimensionless_unit_v<T>;
