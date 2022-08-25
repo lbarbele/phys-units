@@ -120,7 +120,7 @@ namespace units::_details {
     requires req::floating_point_quantity<type>
     constexpr auto convert() const {
       using factor = ratio_divide<typename unit_type::factor, typename U::factor>;
-      return quantity<U, value_type>(m_value * ratio_value<factor, value_type>); 
+      return quantity<U, value_type>(m_value * factor::template value<value_type>); 
     }
 
     template <req::unit_compatible<unit_type> U>
@@ -130,13 +130,13 @@ namespace units::_details {
       if constexpr (factor::num == factor::den)
         return quantity<U, value_type>(m_value);
       else // ! promote value type to long double
-        return quantity<U, long double>(m_value * ratio_value<factor, long double>);
+        return quantity<U, long double>(m_value * factor::template value<value_type>);
     }
 
     template <req::unit_compatible<unit_type> U, req::arithmetic V>
     constexpr operator quantity<U, V>() const {
       using factor = ratio_divide<typename unit_type::factor, typename U::factor>;
-      return quantity<U, V>(m_value * ratio_value<factor, V>);
+      return quantity<U, V>(m_value * factor::template value<V>);
     }
 
     template <std::constructible_from<value_type> T>
