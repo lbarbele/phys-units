@@ -14,7 +14,7 @@ namespace units::_details {
 
   // - forward declare the quantity struct
 
-  template <req::unit U, req::arithmetic V> struct quantity;
+  template <concepts::unit U, concepts::arithmetic V> struct quantity;
 
   // - traits regarting quantities
 
@@ -33,7 +33,7 @@ namespace units::_details {
     template <class T>
     struct is_integral_quantity : std::false_type {};
 
-    template <req::unit U, std::integral V>
+    template <concepts::unit U, std::integral V>
     struct is_integral_quantity<quantity<U, V>> : std::true_type {};
 
     template <class Q>
@@ -43,7 +43,7 @@ namespace units::_details {
     template <class T>
     struct is_floating_point_quantity : std::false_type {};
 
-    template <req::unit U, std::floating_point V>
+    template <concepts::unit U, std::floating_point V>
     struct is_floating_point_quantity<quantity<U, V>> : std::true_type {};
 
     template <class Q>
@@ -53,7 +53,7 @@ namespace units::_details {
     template <class T>
     struct is_dimensionless_quantity : std::false_type {};
 
-    template <req::dimensionless_unit U, std::floating_point V>
+    template <concepts::dimensionless_unit U, std::floating_point V>
     struct is_dimensionless_quantity<quantity<U, V>> : std::true_type {};
 
     template <class Q>
@@ -62,7 +62,7 @@ namespace units::_details {
 
   // - concept of a quantity
 
-  namespace req {
+  namespace concepts {
     template <class T>
     concept quantity = traits::is_quantity_v<T>;
 
@@ -83,7 +83,7 @@ namespace units::_details {
 
   // - definition of the quantity class
 
-  template <req::unit Unit, req::arithmetic ValueType = double>
+  template <concepts::unit Unit, concepts::arithmetic ValueType = double>
   struct quantity {
   public:
     using type = quantity;
@@ -106,25 +106,25 @@ namespace units::_details {
       return m_value;
     }
 
-    constexpr type& set_value(const req::arithmetic auto value) {
+    constexpr type& set_value(const concepts::arithmetic auto value) {
       m_value = value;
       return *this;
     }
 
-    constexpr type set_value(const req::arithmetic auto value) const {
+    constexpr type set_value(const concepts::arithmetic auto value) const {
       return type(value);
     }
 
     // * unit (type) conversion
-    template <req::unit_compatible<unit_type> U>
-    requires req::floating_point_quantity<type>
+    template <concepts::unit_compatible<unit_type> U>
+    requires concepts::floating_point_quantity<type>
     constexpr auto convert() const {
       using factor = ratio_divide<typename unit_type::factor, typename U::factor>;
       return quantity<U, value_type>(m_value * factor::template value<value_type>); 
     }
 
-    template <req::unit_compatible<unit_type> U>
-    requires req::integral_quantity<type>
+    template <concepts::unit_compatible<unit_type> U>
+    requires concepts::integral_quantity<type>
     constexpr auto convert() const {
       using factor = ratio_divide<typename unit_type::factor, typename U::factor>;
       if constexpr (factor::num == factor::den)
@@ -133,14 +133,14 @@ namespace units::_details {
         return quantity<U, long double>(m_value * factor::template value<value_type>);
     }
 
-    template <req::unit_compatible<unit_type> U, req::arithmetic V>
+    template <concepts::unit_compatible<unit_type> U, concepts::arithmetic V>
     constexpr operator quantity<U, V>() const {
       using factor = ratio_divide<typename unit_type::factor, typename U::factor>;
       return quantity<U, V>(m_value * factor::template value<V>);
     }
 
     template <std::constructible_from<value_type> T>
-    requires req::dimensionless_unit<unit_type>
+    requires concepts::dimensionless_unit<unit_type>
     constexpr operator T() const {
       return T(m_value);
     };
@@ -148,17 +148,17 @@ namespace units::_details {
     // * assignment operations for quantities of compatible units
 
     // simple assignment
-    constexpr type& operator=(const req::quantity auto q) {
+    constexpr type& operator=(const concepts::quantity auto q) {
       return set_value(q.template convert<unit_type>().get_value());
     }
 
     // addition assignment
-    constexpr type& operator+=(const req::quantity auto q) {
+    constexpr type& operator+=(const concepts::quantity auto q) {
       return set_value(get_value() + q.template convert<unit_type>().get_value());
     }
 
     // subtraction assignment
-    constexpr type& operator-=(const req::quantity auto q) {
+    constexpr type& operator-=(const concepts::quantity auto q) {
       return set_value(get_value() - q.template convert<unit_type>().get_value());
     }
 
@@ -176,19 +176,19 @@ namespace units::_details {
 
     // simple assignment
     constexpr type& operator=(const std::convertible_to<value_type> auto& x)
-    requires req::dimensionless_unit<unit_type> {
+    requires concepts::dimensionless_unit<unit_type> {
       return set_value(value_type(x));
     }
 
     // addition assignemnt
     constexpr type& operator+=(const std::convertible_to<value_type> auto& x)
-    requires req::dimensionless_unit<unit_type> {
+    requires concepts::dimensionless_unit<unit_type> {
       return set_value(get_value() + value_type(x));
     }
 
     // subtraction assignment
     constexpr type& operator-=(const std::convertible_to<value_type> auto& x)
-    requires req::dimensionless_unit<unit_type> {
+    requires concepts::dimensionless_unit<unit_type> {
       return set_value(get_value() - value_type(x));
     }
 
@@ -223,76 +223,76 @@ namespace units::_details {
     };
 
     // addition with quantity of compatible unit
-    constexpr auto operator+(const req::quantity_compatible<type> auto q) const {
+    constexpr auto operator+(const concepts::quantity_compatible<type> auto q) const {
       const auto value = get_value() + q.template convert<unit_type>().get_value();
       return quantity<unit_type, decltype(value)>(value);
     }
 
     // subtraction with quantity of compatible unit
-    constexpr auto operator-(const req::quantity_compatible<type> auto q) const {
+    constexpr auto operator-(const concepts::quantity_compatible<type> auto q) const {
       const auto value = get_value() - q.template convert<unit_type>().get_value();
       return quantity<unit_type, decltype(value)>(value);
     }
 
     // multiplication by another quantity
-    constexpr auto operator*(const req::quantity auto q) const {
+    constexpr auto operator*(const concepts::quantity auto q) const {
       using resulting_unit = make_unit<unit_type, typename decltype(q)::unit_type>;
       const auto value = get_value() * q.get_value();
       return quantity<resulting_unit, decltype(value)>(value);
     }
 
     // division by another quantity
-    constexpr auto operator/(const req::quantity auto q) const {
+    constexpr auto operator/(const concepts::quantity auto q) const {
       using resulting_unit = make_unit<unit_type, inverse<typename decltype(q)::unit_type>>;
       const auto value = get_value() / q.get_value();
       return quantity<resulting_unit, decltype(value)>(value);
     }
 
     // multiplication by arithmetic type
-    constexpr auto operator*(const req::arithmetic auto x) const {
+    constexpr auto operator*(const concepts::arithmetic auto x) const {
       return quantity<unit_type, decltype(get_value()*x)>(get_value()*x);
     }
 
     // division by arithmetic type
-    constexpr auto operator/(const req::arithmetic auto x) const {
+    constexpr auto operator/(const concepts::arithmetic auto x) const {
       return quantity<unit_type, decltype(get_value()/x)>(get_value()/x);
     }
 
     // modulo operation by integral type (only for integral quantities)
     constexpr auto operator%(const std::integral auto i) const
-    requires req::integral_quantity<type> {
+    requires concepts::integral_quantity<type> {
       return decltype(type{}/i)(get_value()%i);
     }
 
     // modulo operation by another integral quantity
-    constexpr auto operator%(const req::integral_quantity auto q) const
-    requires req::integral_quantity<type> {
+    constexpr auto operator%(const concepts::integral_quantity auto q) const
+    requires concepts::integral_quantity<type> {
       return decltype(type{}/q)(get_value() % q.get_value());
     }
 
     // * comparison
 
-    constexpr bool operator==(const req::quantity auto q) const {
+    constexpr bool operator==(const concepts::quantity auto q) const {
       return get_value() == q.template convert<unit_type>().get_value();
     }
 
-    constexpr bool operator!=(const req::quantity auto q) const {
+    constexpr bool operator!=(const concepts::quantity auto q) const {
       return get_value() != q.template convert<unit_type>().get_value();
     }
 
-    constexpr bool operator<(const req::quantity auto q) const {
+    constexpr bool operator<(const concepts::quantity auto q) const {
       return get_value() < q.template convert<unit_type>().get_value();
     }
 
-    constexpr bool operator>(const req::quantity auto q) const {
+    constexpr bool operator>(const concepts::quantity auto q) const {
       return get_value() > q.template convert<unit_type>().get_value();
     }
 
-    constexpr bool operator<=(const req::quantity auto q) const {
+    constexpr bool operator<=(const concepts::quantity auto q) const {
       return get_value() <= q.template convert<unit_type>().get_value();
     }
 
-    constexpr bool operator>=(const req::quantity auto q) const {
+    constexpr bool operator>=(const concepts::quantity auto q) const {
       return get_value() >= q.template convert<unit_type>().get_value();
     }
 
@@ -300,7 +300,7 @@ namespace units::_details {
 
   // - multiplication by arithmetic type from lhs
 
-  constexpr auto operator*(const req::arithmetic auto x, const req::quantity auto q) {
+  constexpr auto operator*(const concepts::arithmetic auto x, const concepts::quantity auto q) {
     return q * x;
   };
 

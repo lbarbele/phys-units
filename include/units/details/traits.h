@@ -61,7 +61,7 @@ namespace units::_details::traits {
   template <unsigned... is> constexpr inline bool is_sorted_and_unique_v = is_sorted_and_unique<is...>::value;
 }
 
-namespace units::_details::req {
+namespace units::_details::concepts {
   template <class T>
   concept arithmetic = std::is_integral_v<T> || std::is_floating_point_v<T>;
 
