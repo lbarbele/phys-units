@@ -3,12 +3,12 @@
 
 #include <array>
 #include <string_view>
+#include <tuple>
 
 #include <units/details/power.h>
 #include <units/details/ratio.h>
 #include <units/details/string.h>
 #include <units/details/traits.h>
-#include <units/details/tuple.h>
 
 namespace units::_details {
 
@@ -23,6 +23,10 @@ namespace units::_details {
     template <unsigned id, intm_t num = 1, intm_t den = 1>
     using indexed_power = power<indexed<id>, num, den>;
 
+    // * unit multiplicator
+    template <class, class, class>
+    struct multiply;
+    
     // * unit creator
     template <class... Ts>
     struct create;
@@ -33,13 +37,14 @@ namespace units::_details {
   template <concepts::reduced_ratio R, concepts::reduced_power... Ps>
   struct unit;
 
-  using dimensionless_unit = unit<one>;
-
   template <unsigned id>
   using base_unit = unit<one, _unit::indexed_power<id>>;
 
   template <class... Ts>
-  using make_unit = typename _unit::create<one, tuple<>, Ts...>::type;
+  using make_unit = typename _unit::create<unit<one>, Ts...>::type;
+
+  template <class A, class B>
+  using unit_multiply = typename _unit::multiply<A, B, unit<one>>::type;
 
   // - traits
 
@@ -141,11 +146,10 @@ namespace units::_details {
   template <concepts::reduced_ratio R, concepts::reduced_power... Ps>
   struct unit {
     static_assert(((Ps::exponent::num != 0) && ...));
-    // ! missing requirement of sorted, unique power series
 
     using type = unit;
     using factor = R;
-    using powers = tuple<Ps...>;
+    using powers = std::tuple<Ps...>;
 
     static constexpr sstr symbol =
       (_unit::symbol<type> != "?") ? _unit::symbol<type> :
@@ -153,37 +157,54 @@ namespace units::_details {
       "· " + _unit::ratiostr<factor> + " " + unit<one, Ps...>::symbol;
   };
 
-  // - unit creator
+  // - implementation of the product between units
+
+  namespace _unit {
+    template <class Ra, class Pa, class... Pas, class Rb, class Pb, class... Pbs, class... Pcs>
+    requires (Pa::base::index == Pb::base::index)
+    struct multiply<unit<Ra, Pa, Pas...>, unit<Rb, Pb, Pbs...>, unit<one, Pcs...>>
+    : multiply<unit<Ra, Pas...>, unit<Rb, Pbs...>, unit<one, Pcs..., power_multiply<Pa, Pb>>> {};
+
+    template <class Ra, class Pa, class... Pas, class Rb, class Pb, class... Pbs, class... Pcs>
+    requires (Pa::base::index < Pb::base::index)
+    struct multiply<unit<Ra, Pa, Pas...>, unit<Rb, Pb, Pbs...>, unit<one, Pcs...>>
+    : multiply<unit<Ra, Pas...>, unit<Rb, Pb, Pbs...>, unit<one, Pcs..., Pa>> {};
+
+    template <class Ra, class Pa, class... Pas, class Rb, class Pb, class... Pbs, class... Pcs>
+    requires (Pa::base::index > Pb::base::index)
+    struct multiply<unit<Ra, Pa, Pas...>, unit<Rb, Pb, Pbs...>, unit<one, Pcs...>>
+    : multiply<unit<Ra, Pa, Pas...>, unit<Rb, Pbs...>, unit<one, Pcs..., Pb>> {};
+
+    template <class Ra, class... Pas, class Rb, class... Pbs, class... Pcs>
+    requires (sizeof...(Pas) == 0 || sizeof...(Pbs) == 0)
+    struct multiply<unit<Ra, Pas...>, unit<Rb, Pbs...>, unit<one, Pcs...>> {
+      using type = unit<ratio_multiply<Ra, Rb>, Pcs..., Pas..., Pbs...>;
+    };
+  }
+
+  // - implementation of the unit creator 
 
   namespace _unit {
     // next parameter is a ratio
-    template <concepts::ratio Ra, class... Ps, concepts::ratio Rb, class... Ts>
-    struct create<Ra, tuple<Ps...>, Rb, Ts...>
-    : create<ratio_multiply<Ra, Rb>, tuple<Ps...>, Ts...> {};
+    template <class Ra, class... Ps, concepts::ratio Rb, class... Ts>
+    struct create<unit<Ra, Ps...>, Rb, Ts...>
+    : create<unit<ratio_multiply<Ra, Rb>, Ps...>, Ts...> {};
 
     // next parameter is a unit
-    template <concepts::ratio R, class... Ps, concepts::unit U, class... Ts>
-    struct create<R, tuple<Ps...>, U, Ts...>
-    : create<ratio_multiply<R, typename U::factor>, tuple_concat<tuple<Ps...>, typename U::powers>, Ts...> {};
+    template <concepts::unit Ua, concepts::unit Ub, class... Ts>
+    struct create<Ua, Ub, Ts...>
+    : create<unit_multiply<Ua, Ub>, Ts...> {};
 
-    // integral, non-zero power of a unit
-    template <concepts::ratio Ra, class... Ps, concepts::ratio Rb, class... Us, intm_t num, intm_t den, class... Ts>
+    // next parameter is an integral, non-zero power of a unit (simply unpack it)
+    template <concepts::unit U, concepts::ratio R, class... Ps, intm_t num, intm_t den, class... Ts>
     requires (num%den == 0 && num/den != 0)
-    struct create<Ra, tuple<Ps...>, power<unit<Rb, Us...>, num, den>, Ts...>
-    : create<Ra, tuple<Ps...>, unit<ratio_power<Rb, num/den>, power_t<Us, num/den>...>, Ts...> {};
-
-    // unit to the power zero
-    template <concepts::ratio Ra, class... Ps, concepts::ratio Rb, class... Us, intm_t den, class... Ts>
-    struct create<Ra, tuple<Ps...>, power<unit<Rb, Us...>, 0, den>, Ts...>
-    : create<Ra, tuple<Ps...>, Ts...> {};
+    struct create<U, power<unit<R, Ps...>, num, den>, Ts...>
+    : create<U, unit<ratio_power<R, num/den>, power_t<Ps, num/den>...>, Ts...> {};
 
     // base case
-    template <concepts::ratio R, class... Ps>
-    struct create<R, tuple<Ps...>> {
-      using merged = tuple_merge_powers_t<tuple<Ps...>>;
-      using sorted = tuple_sort_indexed_t<merged>;
-      using args = tuple_concat<tuple<R>, sorted>;
-      using type = tuple_convert_t<args, unit>;
+    template <concepts::unit U>
+    struct create<U> {
+      using type = U;
     };
   }
 
