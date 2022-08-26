@@ -28,6 +28,7 @@ namespace units::_details {
     using milli = ratio<1, 1000>;
     using centi = ratio<1, 100>;
     using deci  = ratio<1, 10>;
+    using one   = ratio<1, 1>;
     using deca  = ratio<10, 1>;
     using hecto = ratio<100, 1>;
     using kilo  = ratio<1000, 1>;
