@@ -77,6 +77,24 @@ namespace units::_details {
       return *this + type(c);
     }
 
+    constexpr bool operator==(const type other) const {
+      if (size() != other.size()) {
+        return false;
+      }
+
+      for (std::size_t i = 0; i < size(); ++i) {
+        if (m_data[i] != other.m_data[i]) {
+          return false;
+        }
+      }
+
+      return true;
+    }
+
+    constexpr bool operator==(const char* other) const {
+      return *this == type(other);
+    }
+
     constexpr operator const char*() const {
       return data();
     }
