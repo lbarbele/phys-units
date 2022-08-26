@@ -56,26 +56,20 @@ namespace units::_details {
       m_size = (c == 0)? 0 : max_length;
     }
 
-    constexpr auto operator+(const char* other) const {
-      auto ret = *this;
-      const auto off = ret.size();
+    // * addition assignment
+
+    constexpr auto operator+=(const char* other) {
       std::size_t i = 0;
-      while ((i+off) < max_length && other[i] != 0) {
-        ret.m_data[off + i] = other[i];
-        ++i;
-        ++ret.m_size;
-      }
-      return ret;
+      while(m_size < max_length && other[i] != 0) m_data[m_size++] = other[i++];
+      return *this;
     }
 
-    constexpr auto operator+(const auto& other) const
+    constexpr auto operator+=(const auto& other)
     requires std::is_same_v<decltype(other.data()), const char*> {
-      return *this + other.data();
+      return operator+=(other.data());
     }
 
-    constexpr auto operator+(const char c) const {
-      return *this + type(c);
-    }
+    // * equal comparison
 
     constexpr bool operator==(const type other) const {
       if (size() != other.size()) {
@@ -94,6 +88,25 @@ namespace units::_details {
     constexpr bool operator==(const char* other) const {
       return *this == type(other);
     }
+
+    // * concatenation
+
+    constexpr auto operator+(const char* other) const {
+      auto ret = *this;
+      ret += other;
+      return ret;
+    }
+
+    constexpr auto operator+(const auto& other) const
+    requires std::is_same_v<decltype(other.data()), const char*> {
+      return *this + other.data();
+    }
+
+    constexpr auto operator+(const char c) const {
+      return *this + type(c);
+    }
+
+    // * conversion to const char*
 
     constexpr operator const char*() const {
       return data();
