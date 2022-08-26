@@ -132,6 +132,9 @@ namespace units::_details {
     template <concepts::unit U>
     constexpr inline sstr symbol = default_symbol;
 
+    template <concepts::unit U>
+    constexpr inline bool has_symbol = symbol<U> != default_symbol;
+
     template <concepts::reduced_ratio R>
     constexpr inline sstr ratiostr = (R::num%R::den != 0)?
       ("(" + stringify(R::num) + "/" + stringify(R::den) + ")") :
@@ -141,6 +144,11 @@ namespace units::_details {
     constexpr inline sstr smbpowstr = std::is_same_v<one, typename P::exponent>?
       symbol<base_unit<P::base::index>> :
       symbol<base_unit<P::base::index>> + "^" + ratiostr<typename P::exponent>;
+
+    using std::gcd;
+    constexpr auto gcd(auto head, auto... tail) {
+      return gcd(head, gcd(tail...));
+    }
   }
 
   // - definition of the unit class
@@ -153,10 +161,38 @@ namespace units::_details {
     using factor = R;
     using powers = std::tuple<Ps...>;
 
-    static constexpr sstr symbol =
-      (_unit::symbol<type> != "?") ? _unit::symbol<type> :
-      (std::is_same_v<factor, one>) ? ((_unit::smbpowstr<Ps> + " ") + ...) :
-      "· " + _unit::ratiostr<factor> + " " + unit<one, Ps...>::symbol;
+    static constexpr sstr symbol = []()->sstr{
+      if constexpr (_unit::has_symbol<type>) {
+        return _unit::symbol<type>;
+      } else if constexpr (sizeof...(Ps) > 0 && _unit::has_symbol<unit<one, Ps...>>) {
+        return unit<R>::symbol + " " + _unit::symbol<unit<one, Ps...>>;
+      } else {
+        sstr ret;
+        
+        if constexpr (R::num != R::den) {
+          if constexpr (R::den == 1)
+            ret += "· " + stringify(R::num);
+          else
+            ret += "· (" + stringify(R::num) + "/" + stringify(R::den) + ")"; 
+        }
+
+        if constexpr (sizeof...(Ps) > 0) {
+          ret += ret.size() > 0? " " : "";
+
+          constexpr bool all_int = (Ps::exponent::den * ... * 1) == 1;
+          constexpr auto exp_gcd = _unit::gcd(Ps::exponent::num...);
+          using u = unit<one, power_t<Ps, 1, exp_gcd>...>;
+
+          if constexpr (all_int && exp_gcd != 1 && _unit::has_symbol<u>) {
+            ret += _unit::symbol<u> + "^" + stringify(exp_gcd);
+          } else {
+            ret += ((_unit::smbpowstr<Ps> + " ") + ...);
+          }
+        }
+        
+        return ret;
+      }
+    }();
   };
 
   // - implementation of the product between units
