@@ -75,6 +75,10 @@ namespace units::_details {
     // * ratio is already reduced
     template <class T>
     concept reduced_ratio = traits::is_reduced_ratio_v<T>;
+
+    // * ratio represents integral number
+    template <class T>
+    concept integral_ratio = traits::is_ratio_v<T> && (T::num%T::den == 0);
   }
 
   // - ratio operations
