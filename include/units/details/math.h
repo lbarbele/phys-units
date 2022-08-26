@@ -8,7 +8,6 @@
 
 #include <units/details/power.h>
 #include <units/details/quantity.h>
-#include <units/details/traits.h>
 
 namespace units::_details::_math {
 

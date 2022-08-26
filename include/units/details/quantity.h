@@ -7,10 +7,15 @@
 
 #include <units/details/power.h>
 #include <units/details/ratio.h>
-#include <units/details/traits.h>
 #include <units/details/unit.h>
 
 namespace units::_details {
+
+  // - helper definition of the arithmetic concept
+  namespace concepts {
+    template <class T>
+    concept arithmetic = std::is_integral_v<T> || std::is_floating_point_v<T>;
+  }
 
   // - forward declare the quantity struct
 

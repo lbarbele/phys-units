@@ -4,7 +4,6 @@
 #include <cstdint>
 
 #include <units/details/ratio.h>
-#include <units/details/traits.h>
 
 namespace units::_details {
 
