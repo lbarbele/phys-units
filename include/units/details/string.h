@@ -102,13 +102,22 @@ namespace units::_details {
   };
 
   // - addition from lhs
-  
-  template <class T, std::size_t len>
-  constexpr auto operator+(T c, const static_string<len> s)
-  requires (!std::is_same_v<T, static_string<len>>) {
+
+  template <std::size_t len>
+  constexpr auto operator+(const char* c, const static_string<len>& s) {
     return static_string<len>(c) + s;
   }
 
+  template <std::size_t len>
+  constexpr auto operator+(const std::string_view& c, const static_string<len>& s) {
+    return static_string<len>(c) + s;
+  }
+
+  template <std::size_t len>
+  constexpr auto operator+(const std::string& c, const static_string<len>& s) {
+    return static_string<len>(c) + s;
+  }
+  
   // - stringify: convert integral type value to a static_string
 
   constexpr sstr stringify(const std::integral auto i) {
