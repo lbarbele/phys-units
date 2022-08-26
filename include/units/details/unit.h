@@ -4,6 +4,7 @@
 #include <array>
 #include <string_view>
 #include <tuple>
+#include <numeric>
 
 #include <units/details/power.h>
 #include <units/details/ratio.h>
@@ -126,8 +127,10 @@ namespace units::_details {
   // - units nomenclature helper template variables
 
   namespace _unit {
+    constexpr inline sstr default_symbol = "?";
+
     template <concepts::unit U>
-    constexpr inline sstr symbol = "?";
+    constexpr inline sstr symbol = default_symbol;
 
     template <concepts::reduced_ratio R>
     constexpr inline sstr ratiostr = (R::num%R::den != 0)?
