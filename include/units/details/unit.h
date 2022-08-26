@@ -45,30 +45,30 @@ namespace units::_details {
     : tags::derived_unit {};
 
     // - name/symbol for the unit class
-    template <class T> constexpr inline string unit_name = "?";
-    template <class T> constexpr inline string unit_symbol = "?";
+    template <class T> constexpr inline sstr unit_name = "?";
+    template <class T> constexpr inline sstr unit_symbol = "?";
 
     // create a string from the multiplicative factor
     template <intm_t num, intm_t den>
-    constexpr inline string str_factor =
+    constexpr inline sstr str_factor =
       (num == 1 && den == 1)? "" :
-      (den == 1)? join_v<schar<'*'>, schar<' '>, to_string_v<num>> :
-      join_v<schar<'*'>, schar<' '>, schar<'('>, to_string_v<num>, schar<'/'>, to_string_v<den>, schar<')'>>;
+      (den == 1)? sstr("* ") + stringify(num) :
+      "* (" + stringify(num) + "/" + stringify(den) + ")";
 
     // string for a power using numerador and denominator of exponent
     template <intm_t num, intm_t den>
-    constexpr inline string str_pow = 
+    constexpr inline sstr str_pow = 
       (num == 1 && den == 1)? "" :
-      (den == 1)? join_v<schar<'^'>, to_string_v<num>> :
-      join_v<schar<'^'>, schar<'('>, to_string_v<num>, schar<'/'>, to_string_v<den>, schar<')'>>;
+      (den == 1)? "^" + stringify(num) :
+      "^(" + stringify(num) + "/" + stringify(den) + ")";
 
     // string of base unit name raised to given power
     template <unsigned id, intm_t num, intm_t den>
-    constexpr inline string str_name_pow = join_v<unit_name<base_unit<id>>, str_pow<num, den>>;
+    constexpr inline sstr str_name_pow = unit_name<base_unit<id>> + str_pow<num, den>;
 
     // string of base unit symbol raised to given power
     template <unsigned id, intm_t num, intm_t den>
-    constexpr inline string str_symbol_pow = join_v<unit_symbol<base_unit<id>>, str_pow<num, den>>;
+    constexpr inline sstr str_symbol_pow = unit_symbol<base_unit<id>> + str_pow<num, den>;
 
     // - unit class
     template <intm_t num, intm_t den, unsigned... ids, intm_t... nums, intm_t... dens>
@@ -79,21 +79,21 @@ namespace units::_details {
       using factor = ratio<num, den>;
       using powers = tuple<unit_indexed_power<ids, nums, dens>...>;
 
-      static constexpr string name =
+      static constexpr sstr name =
         // name for this unit is explicitly defined
         (unit_name<type> != "?")? unit_name<type> :
         // explicit name for the corresponding unit without the ratio
-        (unit_name<without_prefix> != "?")? spaced_join_v<str_factor<num, den>, unit_name<without_prefix>> :
+        (unit_name<without_prefix> != "?")? str_factor<num, den> + unit_name<without_prefix> :
         // can only write unit in terms of its base units
-        spaced_join_v<str_factor<num, den>, str_name_pow<ids, nums, dens>...>;
+        (str_factor<num, den> + ... + str_name_pow<ids, nums, dens>);
 
-      static constexpr string symbol =
+      static constexpr sstr symbol =
         // symbol for this unit is explicitly defined
         (unit_symbol<type> != "?")? unit_symbol<type> :
         // explicit symbol for the corresponding unit without the ratio
-        (unit_symbol<without_prefix> != "?")? spaced_join_v<str_factor<num, den>, unit_symbol<without_prefix>> :
+        (unit_symbol<without_prefix> != "?")? str_factor<num, den> + unit_symbol<without_prefix> :
         // can only write unit in terms of its base units
-        spaced_join_v<str_factor<num, den>, str_symbol_pow<ids, nums, dens>...>;
+        (str_factor<num, den> + ... + str_symbol_pow<ids, nums, dens>);
 
       static_assert(traits::is_sorted_and_unique_v<ids...>);
       static_assert(((nums != 0) && ...));
