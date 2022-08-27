@@ -164,17 +164,17 @@ namespace units::_details {
     // * assignment operations for quantities of compatible units
 
     // simple assignment
-    constexpr type& operator=(const concepts::quantity auto q) {
+    constexpr type& operator=(const concepts::quantity_compatible<type> auto q) {
       return set_value(q.template convert<unit_type>().get_value());
     }
 
     // addition assignment
-    constexpr type& operator+=(const concepts::quantity auto q) {
+    constexpr type& operator+=(const concepts::quantity_compatible<type> auto q) {
       return set_value(get_value() + q.template convert<unit_type>().get_value());
     }
 
     // subtraction assignment
-    constexpr type& operator-=(const concepts::quantity auto q) {
+    constexpr type& operator-=(const concepts::quantity_compatible<type> auto q) {
       return set_value(get_value() - q.template convert<unit_type>().get_value());
     }
 
