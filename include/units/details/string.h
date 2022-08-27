@@ -12,7 +12,7 @@ namespace units::_details {
   template <std::size_t max_length>
   struct static_string;
   
-  using sstr = static_string<256>;
+  using string = static_string<256>;
 
   // - definition of the static_string class
 
@@ -133,7 +133,7 @@ namespace units::_details {
   
   // - stringify: convert integral type value to a static_string
 
-  constexpr sstr stringify(const std::integral auto i) {
+  constexpr string stringify(const std::integral auto i) {
     if (i < 0) {
       return "-" + stringify(-i);
     } 

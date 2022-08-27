@@ -127,21 +127,21 @@ namespace units::_details {
   // - units nomenclature helper template variables
 
   namespace _unit {
-    constexpr inline sstr default_symbol = "?";
+    constexpr inline string default_symbol = "?";
 
     template <concepts::unit U>
-    constexpr inline sstr symbol = default_symbol;
+    constexpr inline string symbol = default_symbol;
 
     template <concepts::unit U>
     constexpr inline bool has_symbol = symbol<U> != default_symbol;
 
     template <concepts::reduced_ratio R>
-    constexpr inline sstr ratiostr = (R::num%R::den != 0)?
+    constexpr inline string ratiostr = (R::num%R::den != 0)?
       ("(" + stringify(R::num) + "/" + stringify(R::den) + ")") :
       stringify(R::num);
 
     template <concepts::reduced_power P>
-    constexpr inline sstr smbpowstr = std::is_same_v<one, typename P::exponent>?
+    constexpr inline string smbpowstr = std::is_same_v<one, typename P::exponent>?
       symbol<base_unit<P::base::index>> :
       symbol<base_unit<P::base::index>> + "^" + ratiostr<typename P::exponent>;
 
@@ -161,13 +161,13 @@ namespace units::_details {
     using factor = R;
     using powers = std::tuple<Ps...>;
 
-    static constexpr sstr symbol = []()->sstr{
+    static constexpr string symbol = []()->string{
       if constexpr (_unit::has_symbol<type>) {
         return _unit::symbol<type>;
       } else if constexpr (sizeof...(Ps) > 0 && _unit::has_symbol<unit<one, Ps...>>) {
         return unit<R>::symbol + " " + _unit::symbol<unit<one, Ps...>>;
       } else {
-        sstr ret;
+        string ret;
         
         if constexpr (R::num != R::den) {
           if constexpr (R::den == 1)
