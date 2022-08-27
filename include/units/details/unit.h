@@ -147,7 +147,10 @@ namespace units::_details {
 
     using std::gcd;
     constexpr auto gcd(auto head, auto... tail) {
-      return gcd(head, gcd(tail...));
+      if constexpr (sizeof...(tail) > 0)
+        return gcd(head, gcd(tail...));
+      else
+        return head;
     }
   }
 
@@ -162,7 +165,7 @@ namespace units::_details {
     using powers = std::tuple<Ps...>;
 
     static constexpr string symbol = []()->string{
-      if constexpr (_unit::has_symbol<type>) {
+      if constexpr (_unit::has_symbol<type> || traits::is_base_unit_v<type>) {
         return _unit::symbol<type>;
       } else if constexpr (sizeof...(Ps) > 0 && _unit::has_symbol<unit<one, Ps...>>) {
         return unit<R>::symbol + " " + _unit::symbol<unit<one, Ps...>>;
