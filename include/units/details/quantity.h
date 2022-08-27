@@ -156,7 +156,7 @@ namespace units::_details {
 
     // dimensionless quantities can be converted to any type constructible from value_type
     template <std::constructible_from<value_type> T>
-    requires concepts::dimensionless_unit<unit_type>
+    requires concepts::dimensionless_quantity<type>
     constexpr operator T() const {
       return T(m_value * unit_type::factor::template value<value_type>());
     };
@@ -179,12 +179,12 @@ namespace units::_details {
     }
 
     // multiplication assignment by dimensionless object
-    constexpr type& operator*=(const std::convertible_to<value_type> auto x) {
+    constexpr type& operator*=(const std::convertible_to<value_type> auto& x) {
       return set_value(get_value() * value_type(x));
     }
 
     // division assignment by dimensionless object
-    constexpr type& operator/=(const std::convertible_to<value_type> auto x) {
+    constexpr type& operator/=(const std::convertible_to<value_type> auto& x) {
       return set_value(get_value() / value_type(x));
     }
 
@@ -192,19 +192,19 @@ namespace units::_details {
 
     // simple assignment
     constexpr type& operator=(const std::convertible_to<value_type> auto& x)
-    requires concepts::dimensionless_unit<unit_type> {
+    requires concepts::dimensionless_quantity<type> {
       return set_value(value_type(x));
     }
 
     // addition assignemnt
     constexpr type& operator+=(const std::convertible_to<value_type> auto& x)
-    requires concepts::dimensionless_unit<unit_type> {
+    requires concepts::dimensionless_quantity<type> {
       return set_value(get_value() + value_type(x));
     }
 
     // subtraction assignment
     constexpr type& operator-=(const std::convertible_to<value_type> auto& x)
-    requires concepts::dimensionless_unit<unit_type> {
+    requires concepts::dimensionless_quantity<type> {
       return set_value(get_value() - value_type(x));
     }
 
