@@ -63,6 +63,18 @@ namespace units::_details {
 
     template <class Q>
     constexpr inline bool is_dimensionless_quantity_v = is_dimensionless_quantity<Q>::value;
+
+    // * assert quantities are compatible or incompatible
+    template <class... Qs>
+    requires (sizeof...(Qs) >= 2)
+    struct is_compatible_quantity : std::false_type {};
+
+    template <class... Rs, class... Ps, class... Vs>
+    requires (sizeof...(Rs) >= 2)
+    struct is_compatible_quantity<quantity<unit<Rs, Ps...>, Vs>...> : std::true_type {};
+
+    template <class... Qs>
+    constexpr inline bool is_compatible_quantity_v = is_compatible_quantity<Qs...>::value;
   }
 
   // - concept of a quantity
@@ -72,9 +84,10 @@ namespace units::_details {
     concept quantity = traits::is_quantity_v<T>;
 
     template <class T, class U, class... Us>
-    concept quantity_compatible = std::conjunction_v<
-      traits::is_compatible_unit<typename T::unit_type, typename U::unit_type>,
-      traits::is_compatible_unit<typename T::unit_type, typename Us::unit_type>...>;
+    concept quantity_compatible = traits::is_compatible_quantity_v<T, U, Us...>;
+
+    template <class T, class U, class... Us>
+    concept quantity_incompatible = (!traits::is_compatible_quantity_v<T, U, Us...>);
 
     template <class Q>
     concept integral_quantity = traits::is_integral_quantity_v<Q>;
@@ -136,8 +149,8 @@ namespace units::_details {
     requires concepts::integral_quantity<type>
     constexpr auto convert() const {
       using factor = ratio_divide<typename unit_type::factor, typename U::factor>;
-      if constexpr ((m_value*factor::num)%factor::den == 0)
-        // in case the remainder of the operation (value*num)/den is zero, the returned
+      if constexpr (factor::num%factor::den == 0)
+        // in case the remainder of the operation num/den is zero, the returned
         // quantity carries the same value type as this', because the resulting value
         // can be represented by value type
         return quantity<U, value_type>(m_value * factor::num);
@@ -186,6 +199,12 @@ namespace units::_details {
     // division assignment by dimensionless object
     constexpr type& operator/=(const std::convertible_to<value_type> auto& x) {
       return set_value(get_value() / value_type(x));
+    }
+
+    // modulo assignment of integral quantity by integer number
+    constexpr type& operator%=(const std::integral auto i)
+    requires concepts::integral_quantity<type> {
+      return set_value(get_value()%i);
     }
 
     // * assignment operations for dimensionless quantities
@@ -257,11 +276,29 @@ namespace units::_details {
       return quantity<resulting_unit, decltype(value)>(value);
     }
 
-    // division by another quantity
-    constexpr auto operator/(const concepts::quantity auto q) const {
+    // division by incompatible quantity
+    constexpr auto operator/(const concepts::quantity_incompatible<type> auto q) const {
+      // specialization for the division of incompatible quantites. in this case,
+      // the resulting unit is given by the division of quantities' units,
+      // including the ratio. this means that the result can be multiplied by another
+      // quantity of the same unit as q and the unit of this will be recovered
+      // first, we determine the resulting unit
       using resulting_unit = unit_divide<unit_type, typename decltype(q)::unit_type>;
+      // then, we compute the value
       const auto value = get_value() / q.get_value();
+      // next, create a quantity with a value type matching the one deduced for value
       return quantity<resulting_unit, decltype(value)>(value);
+    }
+
+    // division by compatible quantity
+    constexpr auto operator/(const concepts::quantity_compatible<type> auto q) const {
+      // specialization for the division of compatible quantites, whose result is a
+      // dimensionless quantity. in this case, we simply return a number that also
+      // takes into account the division of the factors carried by each quantities unit.
+      // first, we divide the factors carried by the units
+      using factor = ratio_divide<typename unit_type::factor, typename decltype(q)::unit_type::factor>;
+      // then, proceed to compute the division
+      return (get_value() * factor::num) / (q.get_value() * factor::den);
     }
 
     // multiplication by arithmetic type
@@ -277,13 +314,13 @@ namespace units::_details {
     // modulo operation by integral type (only for integral quantities)
     constexpr auto operator%(const std::integral auto i) const
     requires concepts::integral_quantity<type> {
-      return decltype(type{}/i)(get_value()%i);
+      return quantity<unit_type, decltype(get_value()%i)>(get_value()%i);
     }
 
     // modulo operation by another integral quantity
     constexpr auto operator%(const concepts::integral_quantity auto q) const
     requires concepts::integral_quantity<type> {
-      return decltype(type{}/q)(get_value() % q.get_value());
+      return *this - (*this/q) * q;
     }
 
     // * comparison
