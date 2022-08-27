@@ -205,9 +205,14 @@ namespace units::_details {
 
   namespace _unit {
     template <class Ra, class Pa, class... Pas, class Rb, class Pb, class... Pbs, class... Pcs>
-    requires (Pa::base::index == Pb::base::index)
+    requires (Pa::base::index == Pb::base::index && power_multiply<Pa, Pb>::exponent::num != 0)
     struct multiply<unit<Ra, Pa, Pas...>, unit<Rb, Pb, Pbs...>, unit<one, Pcs...>>
     : multiply<unit<Ra, Pas...>, unit<Rb, Pbs...>, unit<one, Pcs..., power_multiply<Pa, Pb>>> {};
+
+    template <class Ra, class Pa, class... Pas, class Rb, class Pb, class... Pbs, class... Pcs>
+    requires (Pa::base::index == Pb::base::index && power_multiply<Pa, Pb>::exponent::num == 0)
+    struct multiply<unit<Ra, Pa, Pas...>, unit<Rb, Pb, Pbs...>, unit<one, Pcs...>>
+    : multiply<unit<Ra, Pas...>, unit<Rb, Pbs...>, unit<one, Pcs...>> {};
 
     template <class Ra, class Pa, class... Pas, class Rb, class Pb, class... Pbs, class... Pcs>
     requires (Pa::base::index < Pb::base::index)
