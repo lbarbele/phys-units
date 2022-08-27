@@ -46,6 +46,9 @@ namespace units::_details {
   template <class A, class B>
   using unit_multiply = typename _unit::multiply<A, B, unit<one>>::type;
 
+  template <class A, class B>
+  using unit_divide = unit_multiply<A, inverse<B>>;
+
   // - traits
 
   namespace traits {

@@ -252,14 +252,14 @@ namespace units::_details {
 
     // multiplication by another quantity
     constexpr auto operator*(const concepts::quantity auto q) const {
-      using resulting_unit = make_unit<unit_type, typename decltype(q)::unit_type>;
+      using resulting_unit = unit_multiply<unit_type, typename decltype(q)::unit_type>;
       const auto value = get_value() * q.get_value();
       return quantity<resulting_unit, decltype(value)>(value);
     }
 
     // division by another quantity
     constexpr auto operator/(const concepts::quantity auto q) const {
-      using resulting_unit = make_unit<unit_type, inverse<typename decltype(q)::unit_type>>;
+      using resulting_unit = unit_divide<unit_type, typename decltype(q)::unit_type>;
       const auto value = get_value() / q.get_value();
       return quantity<resulting_unit, decltype(value)>(value);
     }
