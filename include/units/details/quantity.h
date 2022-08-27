@@ -111,16 +111,18 @@ namespace units::_details {
       return m_value;
     }
 
-    constexpr type& set_value(const concepts::arithmetic auto value) {
+    constexpr type& set_value(const std::convertible_to<value_type> auto value) {
       m_value = value;
       return *this;
     }
 
-    constexpr type set_value(const concepts::arithmetic auto value) const {
+    constexpr type set_value(const std::convertible_to<value_type> auto value) const {
       return type(value);
     }
 
     // * unit (type) conversion
+
+    // when this' value type is fp number, returned quantity has the same value_type
     template <concepts::unit_compatible<unit_type> U>
     requires concepts::floating_point_quantity<type>
     constexpr auto convert() const {
@@ -128,26 +130,35 @@ namespace units::_details {
       return quantity<U, value_type>(m_value * factor::template value<value_type>); 
     }
 
+    // when this' value type is integral, the value type of the returned quantity
+    // may be promoted to long double to acomodate for the conversion factor
     template <concepts::unit_compatible<unit_type> U>
     requires concepts::integral_quantity<type>
     constexpr auto convert() const {
       using factor = ratio_divide<typename unit_type::factor, typename U::factor>;
-      if constexpr (factor::num == factor::den)
-        return quantity<U, value_type>(m_value);
-      else // ! promote value type to long double
+      if constexpr ((m_value*factor::num)%factor::den == 0)
+        // in case the remainder of the operation (value*num)/den is zero, the returned
+        // quantity carries the same value type as this', because the resulting value
+        // can be represented by value type
+        return quantity<U, value_type>(m_value * factor::num);
+      else
+        // otherwise, a floating point number is required, so we promote the, originally
+        // integral, value_type to long double
         return quantity<U, long double>(m_value * factor::template value<value_type>);
     }
 
+    // explicit type conversion operator. value type is always the requested one
     template <concepts::unit_compatible<unit_type> U, concepts::arithmetic V>
     constexpr operator quantity<U, V>() const {
       using factor = ratio_divide<typename unit_type::factor, typename U::factor>;
       return quantity<U, V>(m_value * factor::template value<V>);
     }
 
+    // dimensionless quantities can be converted to any type constructible from value_type
     template <std::constructible_from<value_type> T>
     requires concepts::dimensionless_unit<unit_type>
     constexpr operator T() const {
-      return T(m_value);
+      return T(m_value * unit_type::factor::template value<value_type>());
     };
 
     // * assignment operations for quantities of compatible units
