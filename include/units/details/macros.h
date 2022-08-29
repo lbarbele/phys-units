@@ -3,10 +3,34 @@
 
 #include <type_traits>
 
-// empty type used to assert if macros are being used in the correct namespace
+// - empty type used to assert if macros are being used in the correct namespace
+
 namespace units {
   struct ns_assert;
 }
+
+// - helper macros
+#define units_macro_concat(A, B) A ## B
+#define units_macro_expand_concat(A, B) units_macro_concat(A, B)
+
+#define PARENS ()
+
+#define EXPAND(...) EXPAND4(EXPAND4(EXPAND4(EXPAND4(__VA_ARGS__))))
+#define EXPAND4(...) EXPAND3(EXPAND3(EXPAND3(EXPAND3(__VA_ARGS__))))
+#define EXPAND3(...) EXPAND2(EXPAND2(EXPAND2(EXPAND2(__VA_ARGS__))))
+#define EXPAND2(...) EXPAND1(EXPAND1(EXPAND1(EXPAND1(__VA_ARGS__))))
+#define EXPAND1(...) __VA_ARGS__
+
+#define FOR_EACH(macro, _a, _b, ...)                                    \
+  __VA_OPT__(EXPAND(FOR_EACH_HELPER(macro, _a, _b, __VA_ARGS__)))
+
+#define FOR_EACH_HELPER(macro, _a, _b, _c, ...)                         \
+  macro(_a, _b, _c)                                                     \
+  __VA_OPT__(FOR_EACH_AGAIN PARENS (macro, _a, _b, __VA_ARGS__))
+
+#define FOR_EACH_AGAIN() FOR_EACH_HELPER
+
+// - unit definition macros
 
 // macro that asserts units are declared in the correct namespace
 #define units_assert_namespace \
@@ -28,23 +52,30 @@ namespace units {
     {return _details::quantity<_symbol_>(value);} \
   }
 
-// add prefixes to given unit
-# define units_add_prefixes(_unit_, _symbol_) units_assert_namespace \
-  units_add_derived_unit(femto ## _unit_,  f ## _symbol_, _details::make_unit<_details::femto, _unit_>) \
-  units_add_derived_unit( pico ## _unit_,  p ## _symbol_, _details::make_unit<_details::pico,  _unit_>) \
-  units_add_derived_unit( nano ## _unit_,  n ## _symbol_, _details::make_unit<_details::nano,  _unit_>) \
-  units_add_derived_unit(micro ## _unit_,  u ## _symbol_, _details::make_unit<_details::micro, _unit_>) \
-  units_add_derived_unit(milli ## _unit_,  m ## _symbol_, _details::make_unit<_details::milli, _unit_>) \
-  units_add_derived_unit(centi ## _unit_,  c ## _symbol_, _details::make_unit<_details::centi, _unit_>) \
-  units_add_derived_unit( deci ## _unit_,  d ## _symbol_, _details::make_unit<_details::deci,  _unit_>) \
-  units_add_derived_unit( deca ## _unit_, da ## _symbol_, _details::make_unit<_details::deca,  _unit_>) \
-  units_add_derived_unit(hecto ## _unit_,  h ## _symbol_, _details::make_unit<_details::hecto, _unit_>) \
-  units_add_derived_unit( kilo ## _unit_,  k ## _symbol_, _details::make_unit<_details::kilo,  _unit_>) \
-  units_add_derived_unit( mega ## _unit_,  M ## _symbol_, _details::make_unit<_details::mega,  _unit_>) \
-  units_add_derived_unit( giga ## _unit_,  G ## _symbol_, _details::make_unit<_details::giga,  _unit_>) \
-  units_add_derived_unit( tera ## _unit_,  T ## _symbol_, _details::make_unit<_details::tera,  _unit_>) \
-  units_add_derived_unit( peta ## _unit_,  P ## _symbol_, _details::make_unit<_details::peta,  _unit_>) \
-  units_add_derived_unit(  exa ## _unit_,  E ## _symbol_, _details::make_unit<_details::exa,   _unit_>)
+// abbreviations of standard prefixes
+#define units_femto_abbrev f
+#define units_pico_abbrev  p
+#define units_nano_abbrev  n
+#define units_micro_abbrev u
+#define units_milli_abbrev m
+#define units_centi_abbrev c
+#define units_deci_abbrev  d
+#define units_deca_abbrev  da
+#define units_hecto_abbrev h
+#define units_kilo_abbrev  k
+#define units_mega_abbrev  M
+#define units_giga_abbrev  G
+#define units_tera_abbrev  T
+#define units_peta_abbrev  P
+#define units_exa_abbrev   E
+
+// set single prefix to given units with symbol
+#define units_set_prefix(_unit_, _symbol_, _prefix_) units_assert_namespace \
+  static_assert(std::is_same_v<_unit_, _symbol_>); \
+  units_add_derived_unit(_prefix_ ## _unit_, units_macro_expand_concat(units_ ## _prefix_ ## _abbrev, _symbol_), make_unit<_details::_prefix_, _unit_>)
+
+#define units_set_prefixes(_unit_, _symbol_, ...) \
+  FOR_EACH(units_set_prefix, _unit_, _symbol_, __VA_ARGS__)
 
 // create aliases for a base unit with given id, then sets its symbol and creates
 // a literal operator
