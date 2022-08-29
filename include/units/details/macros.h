@@ -3,15 +3,17 @@
 
 #include <type_traits>
 
-// - empty type used to assert if macros are being used in the correct namespace
-
-namespace units {
-  struct ns_assert;
-}
-
 // - helper macros
+
+// * concat two tokens
 #define units_macro_concat(A, B) A ## B
+
+// * expand tokens than concat
 #define units_macro_expand_concat(A, B) units_macro_concat(A, B)
+
+// * foreach implementation
+// from: https://www.scs.stanford.edu/~dm/blog/va-opt.html
+// with a small modification to always forward the first two parameters
 
 #define PARENS ()
 
@@ -32,27 +34,41 @@ namespace units {
 
 // - unit definition macros
 
-// macro that asserts units are declared in the correct namespace
+// * assert units are placed in the correct namespace
+
+// first, declare a dummy, imcomplete type in the units namespace
+namespace units {
+  struct units_namespace_assert_type;
+}
+
+// the macro, then, will repeat the forward declaration and check if it is the same
+// one as defined in the units namespace
 #define units_assert_namespace \
-  struct ns_assert; \
+  struct units_namespace_assert_type; \
   static_assert(\
-    std::is_same_v<ns_assert, ::units::ns_assert>, \
+    std::is_same_v<units_namespace_assert_type, ::units::units_namespace_assert_type>, \
     "Units macros can only be used within the ::units namespace" );
 
-// macro to define the symbol of a unit, which is for printout
-#define units_set_symbol(_unit_, _symbol_) units_assert_namespace \
+// * specialize the template variable containing the symbol of the given unit
+
+#define units_set_symbol(_unit_, _symbol_) \
+  units_assert_namespace \
   template <> constexpr inline auto _details::_unit::symbol<_unit_> = _details::string(#_symbol_);
 
-// macro to create a literal for the given unit (a type)
-# define units_set_literal(_unit_, _symbol_) units_assert_namespace \
+// * create a literal operator using the given symbol for the given unit
+
+#define units_set_literal(_unit_, _symbol_) \
+  units_assert_namespace \
   namespace literals { \
     constexpr auto operator ""_ ## _symbol_ (long double value) \
-    {return _details::quantity<_symbol_>(value);} \
+    {return _details::quantity<_unit_>(value);} \
     constexpr auto operator ""_ ## _symbol_ (unsigned long long value) \
-    {return _details::quantity<_symbol_>(value);} \
+    {return _details::quantity<_unit_>(value);} \
   }
 
-// abbreviations of standard prefixes
+// * macros to add prefixes to a unit
+
+// abbreviation helpers
 #define units_femto_abbrev f
 #define units_pico_abbrev  p
 #define units_nano_abbrev  n
@@ -69,35 +85,44 @@ namespace units {
 #define units_peta_abbrev  P
 #define units_exa_abbrev   E
 
-// set single prefix to given units with symbol
+// set single prefix of given units with symbol
 #define units_set_prefix(_unit_, _symbol_, _prefix_) units_assert_namespace \
-  static_assert(std::is_same_v<_unit_, _symbol_>); \
+  static_assert(std::is_same_v<_unit_, _symbol_>, "Units " #_unit_ " and " #_symbol_ " are not the same"); \
   units_add_derived_unit(_prefix_ ## _unit_, units_macro_expand_concat(units_ ## _prefix_ ## _abbrev, _symbol_), make_unit<_details::_prefix_, _unit_>)
 
+// set list of prefixes
 #define units_set_prefixes(_unit_, _symbol_, ...) \
   FOR_EACH(units_set_prefix, _unit_, _symbol_, __VA_ARGS__)
 
-// create aliases for a base unit with given id, then sets its symbol and creates
-// a literal operator
-# define units_add_base_unit(_id_, _name_, _symbol_) units_assert_namespace \
+// set all prefixes
+#define units_set_all_prefixes(_unit_, _symbol_) \
+  units_set_prefixes(_unit_, _symbol_, femto, pico, nano, micro, milli, centi, deci, deca, hecto, kilo, mega, giga, tera, peta, exa)
+
+// * create aliases for a base unit with given id, then set its symbol and 
+// * create a literal operator
+
+#define units_add_base_unit(_id_, _name_, _symbol_) units_assert_namespace \
   using _name_   = _details::base_unit<_id_>; \
   using _symbol_ = _name_; \
   units_set_symbol(_name_, _symbol_); \
   units_set_literal(_name_, _symbol_)
 
-// create aliases for a derived unit, then set its symbol and create a literal operator
-# define units_add_derived_unit(_name_, _symbol_, ...) units_assert_namespace \
+// * create aliases for a derived unit, then set its symbol and create a literal operator
+
+#define units_add_derived_unit(_name_, _symbol_, ...) units_assert_namespace \
   using _name_   = __VA_ARGS__; \
   using _symbol_ = _name_; \
   units_set_symbol(_name_, _symbol_); \
   units_set_literal(_name_, _symbol_)
 
-// create base unit, then create prefixes for it
+// * create base unit, then create prefixes for it
+
 # define units_add_base_unit_with_prefixes(_id_, _name_, _symbol_) units_assert_namespace \
   units_add_base_unit(_id_, _name_, _symbol_) \
   units_add_prefixes(_name_, _symbol_)
 
-// create derived unit, then create prefixes for it
+// * create derived unit, then create prefixes for it
+
 # define units_add_derived_unit_with_prefixes(_name_, _symbol_, ...) units_assert_namespace \
   units_add_derived_unit(_name_, _symbol_, __VA_ARGS__) \
   units_add_prefixes(_name_, _symbol_)
