@@ -44,6 +44,8 @@ namespace units {
   units_add_derived_unit(arcminute, arcmin, make_unit<ratio<1, 60>, degree>);
   units_add_derived_unit(arcsecond, arcsec, make_unit<ratio<1, 60>, arcminute>);
 
+  // - trigonometric functions
+
   namespace _details::_math {
 
     // * trigonometric functions can only be computed using units of angle
