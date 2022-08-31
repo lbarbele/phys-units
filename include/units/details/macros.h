@@ -66,6 +66,11 @@ namespace units {
     {return _details::quantity<_unit_>(value);} \
   }
 
+// * create alias for a quantity with given unit
+
+#define units_set_quantity_alias(_unit_) \
+  template <class V = double> using _unit_ ## t = _details::quantity<_unit_, V>;
+
 // * macros to add prefixes to a unit
 
 // abbreviation helpers
@@ -103,14 +108,16 @@ namespace units {
 #define units_add_base_unit(_id_, _name_, _symbol_) units_assert_namespace \
   using _name_   = _details::base_unit<_id_>; \
   units_set_symbol(_name_, _symbol_); \
-  units_set_literal(_name_, _symbol_)
+  units_set_literal(_name_, _symbol_); \
+  units_set_quantity_alias(_name_)
 
 // * create aliases for a derived unit, then set its symbol and create a literal operator
 
 #define units_add_derived_unit(_name_, _symbol_, ...) units_assert_namespace \
   using _name_   = __VA_ARGS__; \
   units_set_symbol(_name_, _symbol_); \
-  units_set_literal(_name_, _symbol_)
+  units_set_literal(_name_, _symbol_); \
+  units_set_quantity_alias(_name_)
 
 // * create base unit, then create prefixes for it
 

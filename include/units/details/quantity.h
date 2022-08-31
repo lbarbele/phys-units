@@ -142,7 +142,15 @@ namespace units::_details {
     value_type m_value;
 
   public:
-    explicit constexpr quantity(const value_type& value = 0) : m_value(value) {};
+
+    // * constructors
+
+    // construct from raw value
+    explicit constexpr quantity(const value_type& value = 0) : m_value(value) {}
+
+    // construct from another quantity
+    constexpr quantity(const concepts::quantity_compatible<type> auto q)
+    : m_value(q.template convert<unit_type>().get_value()) {}
 
     // * access to raw underlying value
 
