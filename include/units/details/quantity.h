@@ -21,93 +21,112 @@ namespace units::_details {
 
   template <concepts::unit U, concepts::arithmetic V> struct quantity;
 
-  // - traits regarting quantities
+  // - traits and concepts
+
+  // * type is quantity
 
   namespace traits {
-    // * assert type is a quantity
     template <class T>
     struct is_quantity : std::false_type {};
+
+    template <class T>
+    requires (std::is_const_v<T> || std::is_volatile_v<T>)
+    struct is_quantity<T> : is_quantity<std::remove_cv_t<T>> {};
 
     template <class U, class V>
     struct is_quantity<quantity<U, V>> : std::true_type {};
 
     template <class T>
     constexpr inline bool is_quantity_v = is_quantity<T>::value;
-
-    // * assert type is quantity and value is integral
-    template <class T>
-    struct is_integral_quantity : std::false_type {};
-
-    template <concepts::unit U, std::integral V>
-    struct is_integral_quantity<quantity<U, V>> : std::true_type {};
-
-    template <class Q>
-    constexpr inline bool is_integral_quantity_v = is_integral_quantity<Q>::value;
-
-    // * assert type is a quantity and value is floating point
-    template <class T>
-    struct is_floating_point_quantity : std::false_type {};
-
-    template <concepts::unit U, std::floating_point V>
-    struct is_floating_point_quantity<quantity<U, V>> : std::true_type {};
-
-    template <class Q>
-    constexpr inline bool is_floating_point_quantity_v = is_floating_point_quantity<Q>::value;
-
-    // * assert quantity is dimensionless
-    template <class T>
-    struct is_dimensionless_quantity : std::false_type {};
-
-    template <concepts::dimensionless_unit U, std::floating_point V>
-    struct is_dimensionless_quantity<quantity<U, V>> : std::true_type {};
-
-    template <class Q>
-    constexpr inline bool is_dimensionless_quantity_v = is_dimensionless_quantity<Q>::value;
-
-    // * assert quantities are compatible
-    template <class... Qs>
-    requires (sizeof...(Qs) >= 2)
-    struct is_compatible_quantity : std::false_type {};
-
-    template <class... Rs, class... Ps, class... Vs>
-    requires (sizeof...(Rs) >= 2)
-    struct is_compatible_quantity<quantity<unit<Rs, Ps...>, Vs>...> : std::true_type {};
-
-    template <class... Qs>
-    constexpr inline bool is_compatible_quantity_v = is_compatible_quantity<Qs...>::value;
-
-    // * assert two quantities are incompatible
-    template <class A, class B>
-    struct is_incompatible_quantity : std::false_type {};
-
-    template <class Ua, class Ub, class Va, class Vb>
-    requires (!traits::is_compatible_unit_v<Ua, Ub>)
-    struct is_incompatible_quantity<quantity<Ua, Va>, quantity<Ub, Vb>> : std::true_type {};
-
-    template <class A, class B>
-    constexpr inline bool is_incompatible_quantity_v = is_incompatible_quantity<A, B>::value;
   }
-
-  // - concept of a quantity
 
   namespace concepts {
     template <class T>
     concept quantity = traits::is_quantity_v<T>;
+  }
 
-    template <class T, class U, class... Us>
-    concept quantity_compatible = traits::is_compatible_quantity_v<T, U, Us...>;
+  // * type is quantity holding integral/floating point type
 
-    template <class T, class U>
-    concept quantity_incompatible = traits::is_incompatible_quantity_v<T, U>;
+  namespace traits {
+    // integral quantity
+    template <class Q>
+    struct is_integral_quantity : std::false_type {};
 
+    template <concepts::quantity Q>
+    struct is_integral_quantity<Q> : std::is_integral<typename Q::value_type> {};
+
+    template <class Q>
+    constexpr inline bool is_integral_quantity_v = is_integral_quantity<Q>::value;
+
+    // floating-point quantity
+    template <class Q>
+    struct is_floating_point_quantity : std::false_type {};
+
+    template <concepts::quantity Q>
+    struct is_floating_point_quantity<Q> : std::is_floating_point<typename Q::value_type> {};
+
+    template <class Q>
+    constexpr inline bool is_floating_point_quantity_v = is_floating_point_quantity<Q>::value;
+  }
+
+  namespace concepts {
     template <class Q>
     concept integral_quantity = traits::is_integral_quantity_v<Q>;
 
     template <class Q>
     concept floating_point_quantity = traits::is_floating_point_quantity_v<Q>;
+  }
+
+  // * type is quantity with dimensionless units (a conversion factor is accepted)
+
+  namespace traits {
+    template <class T>
+    struct is_dimensionless_quantity : std::false_type {};
+
+    template <concepts::quantity Q>
+    struct is_dimensionless_quantity<Q> : is_dimensionless_unit<typename Q::unit_type> {};
 
     template <class Q>
+    constexpr inline bool is_dimensionless_quantity_v = is_dimensionless_quantity<Q>::value;
+  }
+
+  namespace concepts {
+    template <class Q>
     concept dimensionless_quantity = traits::is_dimensionless_quantity_v<Q>;
+  }
+
+  // * quantities are compatible/incompatible (meaning compatible units)
+
+  namespace traits {
+    // assert quantities are compatible
+    template <class A, class B>
+    struct is_compatible_quantity : std::false_type {};
+
+    template <concepts::quantity Qa, concepts::quantity Qb>
+    struct is_compatible_quantity<Qa, Qb>
+    : is_compatible_unit<typename Qa::unit_type, typename Qb::unit_type> {};
+
+    template <class A, class B>
+    constexpr inline bool is_compatible_quantity_v = is_compatible_quantity<A, B>::value;
+
+    // assert two quantities are incompatible
+    template <class A, class B>
+    struct is_incompatible_quantity : std::false_type {};
+
+    template <concepts::quantity Qa, concepts::quantity Qb>
+    struct is_incompatible_quantity<Qa, Qb>
+    : std::negation<is_compatible_quantity<Qa, Qb>> {};
+
+    template <class A, class B>
+    constexpr inline bool is_incompatible_quantity_v = is_incompatible_quantity<A, B>::value;
+  }
+
+  namespace concepts {
+    template <class Q, class... Qs>
+    concept quantity_compatible = std::conjunction_v<traits::is_compatible_quantity<Q, Qs>...>;
+
+    template <class Q, class... Qs>
+    concept quantity_incompatible = std::conjunction_v<traits::is_incompatible_quantity<Q, Qs>...>;
   }
 
   // - definition of the quantity class
@@ -116,8 +135,8 @@ namespace units::_details {
   struct quantity {
   public:
     using type = quantity;
-    using unit_type = std::decay_t<Unit>;
-    using value_type = std::decay_t<ValueType>;
+    using unit_type = std::remove_cv_t<Unit>;
+    using value_type = std::remove_cv_t<ValueType>;
 
   private:
     value_type m_value;
