@@ -167,16 +167,6 @@ namespace units::_details::_math {
     return quantity<unit_type, decltype(value)>(value);
   }
 
-  // * trigonometric functions (do not allow conversion from dimensionless!)
-
-  using std::sin;
-  using std::cos;
-  using std::tan;
-  using std::asin;
-  using std::acos;
-  using std::atan;
-  using std::atan2;
-
   // * hyperbolic functions
 
   units_math_import_function_for_dimensionless(sinh)

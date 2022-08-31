@@ -85,9 +85,8 @@ namespace units {
 #define units_peta_abbrev  P
 #define units_exa_abbrev   E
 
-// set single prefix of given units with symbol
+// set single prefix to given unit
 #define units_set_prefix(_unit_, _symbol_, _prefix_) units_assert_namespace \
-  static_assert(std::is_same_v<_unit_, _symbol_>, "Units " #_unit_ " and " #_symbol_ " are not the same"); \
   units_add_derived_unit(_prefix_ ## _unit_, units_macro_expand_concat(units_ ## _prefix_ ## _abbrev, _symbol_), make_unit<_details::_prefix_, _unit_>)
 
 // set list of prefixes
@@ -103,7 +102,6 @@ namespace units {
 
 #define units_add_base_unit(_id_, _name_, _symbol_) units_assert_namespace \
   using _name_   = _details::base_unit<_id_>; \
-  using _symbol_ = _name_; \
   units_set_symbol(_name_, _symbol_); \
   units_set_literal(_name_, _symbol_)
 
@@ -111,7 +109,6 @@ namespace units {
 
 #define units_add_derived_unit(_name_, _symbol_, ...) units_assert_namespace \
   using _name_   = __VA_ARGS__; \
-  using _symbol_ = _name_; \
   units_set_symbol(_name_, _symbol_); \
   units_set_literal(_name_, _symbol_)
 
