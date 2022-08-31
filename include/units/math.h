@@ -1,6 +1,7 @@
-#ifndef _include_units_details_math_h
-#define _include_units_details_math_h
+#ifndef _include_units_math_h
+#define _include_units_math_h
 
+#include <algorithm>
 #include <cinttypes>
 #include <cmath>
 #include <concepts>
@@ -9,109 +10,122 @@
 #include <units/details/power.h>
 #include <units/details/quantity.h>
 
+// - MACROS: only visible inside this file (they are undef below)
+
+#define units_math_import_function_for_dimensionless(_fname_)      \
+  using std::_fname_;                                              \
+  auto _fname_(const concepts::dimensionless_quantity auto q)      \
+  {return _fname_(q.template convert<make_unit<>>().get_value());}
+  
+#define units_math_import_function_for_get_value_returning_quantity(_fname_)  \
+  using std::_fname_;                                                         \
+  auto _fname_(const concepts::quantity auto q)                               \
+  {return decltype(q)(_fname_(q.get_value()));}
+
+#define units_math_import_function_for_get_value_returning_value(_fname_)     \
+  using std::_fname_;                                                         \
+  auto _fname_(const concepts::quantity auto q)                               \
+  {return _fname_(q.get_value());}
+
+
+// - import declarations to the units::math namespace
+
+namespace units::_details::_math {}
+
+namespace units::math {
+  using namespace units::_details::_math;
+}
+
+// - math functions
+
 namespace units::_details::_math {
 
-  // - basic operations
+  // * basic operations
 
-  // * abs
-  using std::abs;
+  using std::fmod;
+  using std::remainder;
+  using std::remquo;
+  using std::fma;
+  using std::fmax;
+  using std::fmin;
+  using std::max;
+  using std::min;
+  using std::fdim;
+  using std::nan;
 
-  constexpr auto abs(const concepts::quantity auto q) {
-    return q.set_value(q.get_value() >= 0? q.get_value() : -q.get_value());
-  }
+  // abs
+  constexpr auto abs(const concepts::arithmetic auto x)
+  {return x != x? x : x >= 0? x : -x;}
 
-  // * div (integral quantity)
-  using std::div;
+  constexpr auto abs(const concepts::quantity auto q)
+  {return q.set_value(abs(q.get_value()));}
 
+  // div (for integral quantity)
   using std::div_t;
   using std::ldiv_t;
   using std::lldiv_t;
-  using std::imaxdiv_t;
 
-  template <concepts::integral_quantity Q> struct qdiv_t {Q quot; Q rem;};
+  template <concepts::integral_quantity Q, concepts::integral_quantity R>
+  struct qdiv_t {Q quot; R rem;};
 
-  constexpr auto div(const concepts::integral_quantity auto a, const concepts::integral_quantity auto b) {
-    return qdiv_t<decltype(a/b)>{a/b, a%b};
-  }
+  constexpr auto div(const int a, const int b)
+  {return div_t{a/b, a%b};}
 
-  constexpr auto div(const concepts::integral_quantity auto a, const std::integral auto i) {
-    return qdiv_t<decltype(a)>{a/i, a%i};
-  }
+  constexpr auto div(const long a, const long b)
+  {return ldiv_t{a/b, a%b};}
 
-  // * fmod
-  using std::fmod;
+  constexpr auto div(const long long a, const long long b)
+  {return lldiv_t{a/b, a%b};}
 
-  auto fmod (const concepts::quantity auto a, const concepts::quantity auto b) {
-    using type = decltype(a/b);
-    return type(fmod(type(a).get_value(), type(b).get_value()));
-  }
+  constexpr auto div(const concepts::integral_quantity auto a, const auto b)
+  {return qdiv_t(a/b, a%b);}
 
-  auto fmod (const concepts::quantity auto a, const concepts::arithmetic auto b) {
-    return decltype(a)(fmod(a.get_value(), b));
-  }
+  // fmod
+  auto fmod (const concepts::quantity auto a, const concepts::quantity auto b)
+  {return a - decltype(a/b)(std::trunc((a/b).get_value())) * b;}
 
-  // * remainder
-  using std::remainder;
+  auto fmod (const concepts::quantity auto a, const concepts::arithmetic auto b)
+  {return decltype(a)(fmod(a.get_value(), b));}
 
-  auto remainder(const concepts::quantity auto a, const concepts::quantity auto b) {
-    using type = decltype(a/b);
-    return type(remainder(type(a).get_value(), type(b).get_value()));
-  }
+  // remainder
+  auto remainder(const concepts::quantity auto a, const concepts::quantity auto b)
+  {return a - decltype(a/b)(std::trunc((a/b).get_value())) * b;}
 
-  auto remainder (const concepts::quantity auto a, const concepts::arithmetic auto b) {
-    return a.set_value(remainder(a.get_value(), b));
-  }
+  auto remainder (const concepts::quantity auto a, const concepts::arithmetic auto b)
+  {return decltype(a)(fmod(a.get_value(), b));}
 
-  // ! remquo (not implemented)
+  // fused multiply add
+  constexpr auto fma(const concepts::quantity auto a, const concepts::quantity auto b, const concepts::quantity auto c)
+  {return (a*b) + c;}
 
-  // * fused multiply add
-  using std::fma;
+  // min/max value
+  constexpr auto max(const concepts::quantity auto a, const concepts::quantity auto b)
+  requires concepts::quantity_compatible<decltype(a), decltype(b)>
+  {return a >= b? a : decltype(a)(b);}
 
-  constexpr auto fma(const concepts::quantity auto a, const concepts::quantity auto b, const concepts::quantity auto c) {
-    return (a*b) + c;
-  }
-
-  // * min/max value
-  using std::fmax;
-
-  constexpr auto fmax(const concepts::quantity auto a, const concepts::quantity auto b)
-  requires concepts::quantity_compatible<decltype(a), decltype(b)> {
-    return a >= b? a : b;
-  }
-
-  using std::fmin;
-
-  constexpr auto fmin(const concepts::quantity auto a, const concepts::quantity auto b)
-  requires concepts::quantity_compatible<decltype(a), decltype(b)> {
-    return a <= b? a : b;
-  }
-
-  // * fdim
-  using std::fdim;
-
+  // fdim
   constexpr auto fdim(const concepts::quantity auto a, const concepts::quantity auto b)
-  requires concepts::quantity_compatible<decltype(a), decltype(b)> {
-    return (a > b)? (a - b) : decltype(a-b)(0);
-  }
+  requires concepts::quantity_compatible<decltype(a), decltype(b)>
+  {return (a > b)? (a - b) : decltype(a-b)(0);}
 
-  // ! nan not implemented
+  // * exponential functions
 
-  // - exponential functions (use implicit conversion to value_type)
-  using std::exp;
-  using std::exp2;
-  using std::expm1;
-  using std::log;
-  using std::log10;
-  using std::log2;
-  using std::log1p;
+  units_math_import_function_for_dimensionless(exp)
+  units_math_import_function_for_dimensionless(exp2)
+  units_math_import_function_for_dimensionless(expm1)
+  units_math_import_function_for_dimensionless(log)
+  units_math_import_function_for_dimensionless(log10)
+  units_math_import_function_for_dimensionless(log2)
+  units_math_import_function_for_dimensionless(log1p)
 
-  // - power functions
-  using std::pow;
-  using std::sqrt;
-  using std::cbrt;
-  using std::hypot;
+  // * power functions
 
-  // * compile-time integer power of an arithmetic-type object
+  units_math_import_function_for_dimensionless(pow)
+  units_math_import_function_for_dimensionless(sqrt)
+  units_math_import_function_for_dimensionless(cbrt)
+  units_math_import_function_for_dimensionless(hypot)
+
+  // compile-time integer power of an arithmetic-type object
   template <std::intmax_t p>
   auto pow(const concepts::arithmetic auto x) -> std::conditional_t<(p>=0), decltype(x), long double> {
     if constexpr (p == 0)
@@ -126,14 +140,14 @@ namespace units::_details::_math {
     }
   }
 
-  // * compile-time integer power of a quantity
+  // compile-time integer power of a quantity
   template <std::intmax_t p, concepts::unit U, concepts::arithmetic V>
   auto pow(const quantity<U, V> q) {
     const auto value = pow<p>(q.get_value());
     return quantity<make_unit<power<U, p>>, decltype(value)>(value);
   }
 
-  // * hypot function for quantitites
+  // hypot function for quantitites
   auto hypot(const concepts::quantity auto a, const concepts::quantity auto b)
   requires concepts::quantity_compatible<decltype(a), decltype(b)> {
     using unit_type = typename decltype(a+b)::unit_type;
@@ -153,7 +167,8 @@ namespace units::_details::_math {
     return quantity<unit_type, decltype(value)>(value);
   }
 
-  // - trigonometric functions
+  // * trigonometric functions (do not allow conversion from dimensionless!)
+
   using std::sin;
   using std::cos;
   using std::tan;
@@ -162,85 +177,61 @@ namespace units::_details::_math {
   using std::atan;
   using std::atan2;
 
-  // - hyperbolic functions
-  using std::sinh;
-  using std::cosh;
-  using std::tanh;
-  using std::asinh;
-  using std::acosh;
-  using std::atanh;
+  // * hyperbolic functions
 
-  // - error and gamma functions
-  using std::erf;
-  using std::erfc;
-  using std::tgamma;
-  using std::lgamma;
+  units_math_import_function_for_dimensionless(sinh)
+  units_math_import_function_for_dimensionless(cosh)
+  units_math_import_function_for_dimensionless(tanh)
+  units_math_import_function_for_dimensionless(asinh)
+  units_math_import_function_for_dimensionless(acosh)
+  units_math_import_function_for_dimensionless(atanh)
 
-  // - nearest integer fp operations
-  using std::ceil;
-  auto ceil(const concepts::quantity auto q) {
-    return decltype(q)(ceil(q.get_value()));
-  }
+  // * error and gamma functions
 
-  using std::floor;
-  auto floor(const concepts::quantity auto q) {
-    return decltype(q)(floor(q.get_value()));
-  }
+  units_math_import_function_for_dimensionless(erf)
+  units_math_import_function_for_dimensionless(erfc)
+  units_math_import_function_for_dimensionless(tgamma)
+  units_math_import_function_for_dimensionless(lgamma)
 
-  using std::trunc;
-  auto trunc(const concepts::quantity auto q) {
-    return decltype(q)(trunc(q.get_value()));
-  }
+  // * nearest integer fp operations
 
-  using std::round;
-  auto round(const concepts::quantity auto q) {
-    return decltype(q)(round(q.get_value()));
-  }
+  units_math_import_function_for_get_value_returning_quantity(ceil)
+  units_math_import_function_for_get_value_returning_quantity(floor)
+  units_math_import_function_for_get_value_returning_quantity(trunc)
+  units_math_import_function_for_get_value_returning_quantity(round)
+  units_math_import_function_for_get_value_returning_quantity(nearbyint)
+  units_math_import_function_for_get_value_returning_quantity(rint)
 
-  using std::nearbyint;
-  auto nearbyint(const concepts::quantity auto q) {
-    return decltype(q)(nearbyint(q.get_value()));
-  }
+  // * fp manipulation
 
-  using std::rint;
-  auto rint(const concepts::quantity auto q) {
-    return decltype(q)(rint(q.get_value()));
-  }
-
-  // - fp manipulation
   using std::frexp;
-  auto frexp(const concepts::quantity auto q, int* exponent) {
-    return decltype(q)(frexp(q.get_value(), exponent));
-  }
-
   using std::ldexp;
-  auto ldexp(const concepts::quantity auto q, int exponent) {
-    return decltype(q)(ldexp(q.get_value(), exponent));
-  }
-
   using std::modf;
-  template <concepts::quantity Q>
-  auto modf(const Q q, Q* qiptr) {
-    return Q(modf(q.get_value(), qiptr->get_value()));
-  }
-
   using std::scalbn;
-  auto scalbn(const concepts::quantity auto q, const std::integral auto exponent) {
-    return decltype(q)(scalbn(q.get_value(), exponent));
-  }
-
   using std::ilogb;
-  auto ilogb(const concepts::quantity auto q) {
-    return ilogb(q.get_value());
-  }
-
   using std::logb;
-  auto logb(const concepts::quantity auto q) {
-    return logb(q.get_value());
-  }
-
   using std::nextafter;
   using std::nexttoward;
+  using std::copysign;
+
+  auto frexp(const concepts::quantity auto q, int* exponent)
+  {return decltype(q)(frexp(q.get_value(), exponent));}
+
+  auto ldexp(const concepts::quantity auto q, int exponent)
+  {return decltype(q)(ldexp(q.get_value(), exponent));}
+
+  template <concepts::quantity Q>
+  auto modf(const Q q, Q* qiptr)
+  {return Q(modf(q.get_value(), qiptr->get_value()));}
+
+  auto scalbn(const concepts::quantity auto q, const std::integral auto exponent)
+  {return decltype(q)(scalbn(q.get_value(), exponent));}
+
+  auto ilogb(const concepts::quantity auto q)
+  {return ilogb(q.get_value());}
+
+  auto logb(const concepts::quantity auto q)
+  {return logb(q.get_value());}
 
   auto nextafter(const concepts::quantity auto from, const concepts::quantity auto to)
   requires concepts::quantity_compatible<decltype(from), decltype(to)> {
@@ -254,64 +245,48 @@ namespace units::_details::_math {
     return nexttoward(tp(from).get_value(), tp(to).get_value());
   }
 
-  using std::copysign;
-  constexpr auto copysign(const concepts::quantity auto mag, const concepts::quantity auto sgn) {
-    return sgn.get_value() > 0? abs(mag) : -abs(mag);
-  }
+  constexpr auto copysign(const concepts::quantity auto mag, const concepts::quantity auto sgn)
+  {return sgn.get_value() > 0? abs(mag) : -abs(mag);}
 
-  // - classification and comparison
-# define units_import(_name_) \
-  using std::_name_; \
-  auto _name_(const concepts::quantity auto q) {return _name_(q.get_value());}
+  // * classification and comparison
 
-  using std::fpclassify;
-  auto fpclassify(const concepts::quantity auto q) {return fpclassify(q.get_value());}
-
-  using std::isfinite;
-  auto isfinite(const concepts::quantity auto q) {return isfinite(q.get_value());}
-
-  using std::isinf;
-  auto isinf(const concepts::quantity auto q) {return isinf(q.get_value());}
-
-  using std::isnan;
-  auto isnan(const concepts::quantity auto q) {return isnan(q.get_value());}
-
-  using std::isnormal;
-  auto isnormal(const concepts::quantity auto q) {return isnormal(q.get_value());}
-
-  using std::signbit;
-  auto signbit(const concepts::quantity auto q) {return signbit(q.get_value());}
+  units_math_import_function_for_get_value_returning_value(fpclassify)
+  units_math_import_function_for_get_value_returning_value(isfinite)
+  units_math_import_function_for_get_value_returning_value(isinf)
+  units_math_import_function_for_get_value_returning_value(isnan)
+  units_math_import_function_for_get_value_returning_value(isnormal)
+  units_math_import_function_for_get_value_returning_value(signbit)
 
   using std::isgreater;
-  constexpr auto isgreater(const concepts::quantity auto a, const concepts::quantity auto b) {
-    return a > b;
-  }
-
   using std::isgreaterequal;
-  constexpr auto isgreaterequal(const concepts::quantity auto a, const concepts::quantity auto b) {
-    return a >= b;
-  }
-
   using std::isless;
-  constexpr auto isless(const concepts::quantity auto a, const concepts::quantity auto b) {
-    return a < b;
-  }
-
   using std::islessequal;
-  constexpr auto islessequal(const concepts::quantity auto a, const concepts::quantity auto b) {
-    return a < b;
-  }
-
   using std::islessgreater;
-  constexpr auto islessgreater(const concepts::quantity auto a, const concepts::quantity auto b) {
-    return a < b || a > b;
-  }
-
   using std::isunordered;
-  constexpr auto isunordered(const concepts::quantity auto a, const concepts::quantity auto b) {
-    return isnan(a) || isnan(b);
-  }
 
+  constexpr auto isgreater(const concepts::quantity auto a, const concepts::quantity auto b)
+  {return a > b;}
+
+  constexpr auto isgreaterequal(const concepts::quantity auto a, const concepts::quantity auto b)
+  {return a >= b;}
+
+  constexpr auto isless(const concepts::quantity auto a, const concepts::quantity auto b)
+  {return a < b;}
+
+  constexpr auto islessequal(const concepts::quantity auto a, const concepts::quantity auto b)
+  {return a < b;}
+
+  constexpr auto islessgreater(const concepts::quantity auto a, const concepts::quantity auto b)
+  {return a < b || a > b;}
+
+  constexpr auto isunordered(const concepts::quantity auto a, const concepts::quantity auto b)
+  {return isnan(a) || isnan(b);}
 }
+
+// - undefine macros
+
+#undef units_math_import_function_for_dimensionless
+#undef units_math_import_function_for_get_value_returning_quantity
+#undef units_math_import_function_for_get_value_returning_value
 
 #endif
