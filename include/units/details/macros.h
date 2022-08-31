@@ -69,7 +69,7 @@ namespace units {
 // * create alias for a quantity with given unit
 
 #define units_set_quantity_alias(_unit_) \
-  template <class V = double> using _unit_ ## t = _details::quantity<_unit_, V>;
+  template <class V = double> using _unit_ ## _t = _details::quantity<_unit_, V>;
 
 // * macros to add prefixes to a unit
 
