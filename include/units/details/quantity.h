@@ -201,7 +201,7 @@ namespace units::_details {
     template <std::constructible_from<value_type> T>
     requires concepts::dimensionless_quantity<type>
     constexpr operator T() const {
-      return T(m_value * unit_type::factor::template value<value_type>());
+      return T(m_value * unit_type::factor::template value<value_type>);
     };
 
     // * assignment operations for quantities of compatible units
