@@ -64,7 +64,7 @@ namespace units::_details {
     template <class Q>
     constexpr inline bool is_dimensionless_quantity_v = is_dimensionless_quantity<Q>::value;
 
-    // * assert quantities are compatible or incompatible
+    // * assert quantities are compatible
     template <class... Qs>
     requires (sizeof...(Qs) >= 2)
     struct is_compatible_quantity : std::false_type {};
@@ -75,6 +75,17 @@ namespace units::_details {
 
     template <class... Qs>
     constexpr inline bool is_compatible_quantity_v = is_compatible_quantity<Qs...>::value;
+
+    // * assert two quantities are incompatible
+    template <class A, class B>
+    struct is_incompatible_quantity : std::false_type {};
+
+    template <class Ua, class Ub, class Va, class Vb>
+    requires (!traits::is_compatible_unit_v<Ua, Ub>)
+    struct is_incompatible_quantity<quantity<Ua, Va>, quantity<Ub, Vb>> : std::true_type {};
+
+    template <class A, class B>
+    constexpr inline bool is_incompatible_quantity_v = is_incompatible_quantity<A, B>::value;
   }
 
   // - concept of a quantity
@@ -86,8 +97,8 @@ namespace units::_details {
     template <class T, class U, class... Us>
     concept quantity_compatible = traits::is_compatible_quantity_v<T, U, Us...>;
 
-    template <class T, class U, class... Us>
-    concept quantity_incompatible = (!traits::is_compatible_quantity_v<T, U, Us...>);
+    template <class T, class U>
+    concept quantity_incompatible = traits::is_incompatible_quantity_v<T, U>;
 
     template <class Q>
     concept integral_quantity = traits::is_integral_quantity_v<Q>;
