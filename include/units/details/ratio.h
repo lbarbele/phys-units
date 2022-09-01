@@ -163,12 +163,6 @@ namespace units::_details {
     using type = ratio<num, den>;
     using invert = ratio<den, num>;
 
-    template <concepts::ratio R> using add = ratio_add<type, R>;
-    template <concepts::ratio R> using subtract = ratio_subtract<type, R>;
-    template <concepts::ratio R> using multiply = ratio_multiply<type, R>;
-    template <concepts::ratio R> using divide = ratio_divide<type, R>;
-    template <intm_t exponent> using pow = ratio_power<type, exponent>;
-    
     template <std::floating_point T> static constexpr T value{static_cast<T>(num)/static_cast<T>(den)};
   };
 }
