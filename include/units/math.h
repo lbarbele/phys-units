@@ -126,7 +126,7 @@ namespace units::_details::_math {
   units_math_import_function_for_dimensionless(hypot)
 
   // compile-time integer power of an arithmetic-type object
-  template <std::intmax_t p>
+  template <int p>
   auto pow(const concepts::arithmetic auto x) -> std::conditional_t<(p>=0), decltype(x), long double> {
     if constexpr (p == 0)
       return 1;
@@ -141,7 +141,7 @@ namespace units::_details::_math {
   }
 
   // compile-time integer power of a quantity
-  template <std::intmax_t p, concepts::unit U, concepts::arithmetic V>
+  template <int p, concepts::unit U, concepts::arithmetic V>
   auto pow(const quantity<U, V> q) {
     const auto value = pow<p>(q.get_value());
     return quantity<make_unit<power<U, p>>, decltype(value)>(value);
