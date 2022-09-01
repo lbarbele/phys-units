@@ -38,7 +38,7 @@ namespace units {
   units_add_base_unit(9,    radian, rad);
 
   // * define other angular units
-  units_add_derived_unit(pi, pi, make_unit<ratio<245850922, 78256779>, radian>);
+  units_add_derived_unit(pi, pi, make_unit<ratio<14885392687, 4738167652>, radian>);
   units_add_derived_unit(degree, deg, make_unit<ratio<1, 180>, pi>);
   units_add_derived_unit(cycle, cyc, make_unit<ratio<2>, pi>);
   units_add_derived_unit(arcminute, arcmin, make_unit<ratio<1, 60>, degree>);

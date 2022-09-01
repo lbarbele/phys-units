@@ -3,6 +3,7 @@
 
 #include <concepts>
 #include <cstdint>
+#include <numeric>
 #include <ratio>
 #include <type_traits>
 
@@ -10,7 +11,35 @@ namespace units::_details {
 
   // - alias for the maximum representable integer type
 
-  using intm_t = std::intmax_t;
+  using intm_t = __int128_t;
+
+  template <char... chars>
+  constexpr __int128_t operator""_imax() {
+
+    auto ctoi = [](char c){
+      switch (c) {
+        case '0': return 0;
+        case '1': return 1;
+        case '2': return 2;
+        case '3': return 3;
+        case '4': return 4;
+        case '5': return 5;
+        case '6': return 6;
+        case '7': return 7;
+        case '8': return 8;
+        case '9': return 9;
+      }
+    };
+
+    __int128_t ret = 0;
+    for (auto c : {chars...}) {
+      if (c != '\'') {
+        ret *= 10;
+        ret += ctoi(c);
+      }
+    }
+    return ret;
+  }
 
   // - forward declarations and aliases
 
@@ -20,23 +49,27 @@ namespace units::_details {
   using ratio_t = typename ratio<n, d>::type;
 
   inline namespace prefixes {
-    using atto  = ratio<1, 1000000000000000000>;
-    using femto = ratio<1, 1000000000000000>;
-    using pico  = ratio<1, 1000000000000>;
-    using nano  = ratio<1, 1000000000>;
-    using micro = ratio<1, 1000000>;
-    using milli = ratio<1, 1000>;
+    using yocto = ratio<1, 1'000'000'000'000'000'000'000'000_imax>;
+    using zepto = ratio<1, 1'000'000'000'000'000'000'000_imax>;
+    using atto  = ratio<1, 1'000'000'000'000'000'000>;
+    using femto = ratio<1, 1'000'000'000'000'000>;
+    using pico  = ratio<1, 1'000'000'000'000>;
+    using nano  = ratio<1, 1'000'000'000>;
+    using micro = ratio<1, 1'000'000>;
+    using milli = ratio<1, 1'000>;
     using centi = ratio<1, 100>;
     using deci  = ratio<1, 10>;
     using one   = ratio<1, 1>;
     using deca  = ratio<10, 1>;
     using hecto = ratio<100, 1>;
-    using kilo  = ratio<1000, 1>;
-    using mega  = ratio<1000000, 1>;
-    using giga  = ratio<1000000000, 1>;
-    using tera  = ratio<1000000000000, 1>;
-    using peta  = ratio<1000000000000000, 1>;
-    using exa   = ratio<1000000000000000000, 1>;
+    using kilo  = ratio<1'000, 1>;
+    using mega  = ratio<1'000'000, 1>;
+    using giga  = ratio<1'000'000'000, 1>;
+    using tera  = ratio<1'000'000'000'000, 1>;
+    using peta  = ratio<1'000'000'000'000'000, 1>;
+    using exa   = ratio<1'000'000'000'000'000'000, 1>;
+    using zetta = ratio<1'000'000'000'000'000'000'000_imax, 1>;
+    using yotta = ratio<1'000'000'000'000'000'000'000'000_imax, 1>;
   }
 
   // - traits
@@ -46,9 +79,8 @@ namespace units::_details {
     template <class T>
     struct is_ratio : std::false_type {};
 
-    template <class T>
-    requires std::is_integral_v<decltype(T::num)> && std::is_integral_v<decltype(T::den)>
-    struct is_ratio<T> : std::true_type {};
+    template <intm_t num, intm_t den>
+    struct is_ratio<ratio<num, den>> : std::true_type {};
 
     template <class T>
     constexpr inline bool is_ratio_v = is_ratio<T>::value;
@@ -83,30 +115,21 @@ namespace units::_details {
 
   // - ratio operations
 
-  // * actual implementation of the basic operations
-  namespace _ratio {
-    template <template<concepts::ratio, concepts::ratio> class Op, concepts::ratio A, concepts::ratio B>
-    struct operation {
-      using result = Op<A, B>;
-      using type = typename ratio<result::num, result::den>::type;
-    };
-  }
-
   // * ratio sum
   template <concepts::ratio A, concepts::ratio B>
-  using ratio_add = typename _ratio::operation<std::ratio_add, A, B>::type;
+  using ratio_add = ratio_t<(A::num*B::den + A::den*B::num), A::den * B::den>;
 
   // * ratio subtraction
   template <concepts::ratio A, concepts::ratio B>
-  using ratio_subtract = typename _ratio::operation<std::ratio_subtract, A, B>::type;
+  using ratio_subtract = ratio_t<(A::num*B::den - A::den*B::num), A::den * B::den>;
 
   // * ratio multiplication
   template <concepts::ratio A, concepts::ratio B>
-  using ratio_multiply = typename _ratio::operation<std::ratio_multiply, A, B>::type;
+  using ratio_multiply = ratio_t<A::num*B::num, A::den*B::den>;
 
   // * ratio division
   template <concepts::ratio A, concepts::ratio B>
-  using ratio_divide = typename _ratio::operation<std::ratio_divide, A, B>::type;
+  using ratio_divide = ratio_t<A::num*B::den, A::den*B::num>;
 
   // * implementation of the ratio power
   namespace _ratio {
@@ -156,14 +179,26 @@ namespace units::_details {
   // - definition of the ratio struct
 
   template <intm_t n, intm_t d>
-  struct ratio : std::ratio<n, d> {
-    using std::ratio<n, d>::num;
-    using std::ratio<n, d>::den;
-    
+  struct ratio {
+    static_assert(d != 0, "Denominator cannot be zero.");
+
+    static constexpr intm_t div = [](auto a, auto b){
+      while(b != 0) {
+        intm_t t = a%b;
+        a = b;
+        b = t;
+      }
+      return a;
+    }(n, d);
+
+    static constexpr intm_t num = n/div;
+    static constexpr intm_t den = d/div;
+
     using type = ratio<num, den>;
     using invert = ratio<den, num>;
 
-    template <std::floating_point T> static constexpr T value{static_cast<T>(num)/static_cast<T>(den)};
+    template <std::floating_point T>
+    static constexpr T value{static_cast<T>(num)/static_cast<T>(den)};
   };
 }
 
