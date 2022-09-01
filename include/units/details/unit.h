@@ -147,14 +147,6 @@ namespace units::_details {
     constexpr inline string smbpowstr = std::is_same_v<one, typename P::exponent>?
       symbol<base_unit<P::base::index>> :
       symbol<base_unit<P::base::index>> + "^" + ratiostr<typename P::exponent>;
-
-    using std::gcd;
-    constexpr auto gcd(auto head, auto... tail) {
-      if constexpr (sizeof...(tail) > 0)
-        return gcd(head, gcd(tail...));
-      else
-        return head;
-    }
   }
 
   // - definition of the unit class
@@ -186,7 +178,7 @@ namespace units::_details {
           ret += ret.size() > 0? " " : "";
 
           constexpr bool all_int = (Ps::exponent::den * ... * 1) == 1;
-          constexpr auto exp_gcd = _unit::gcd(Ps::exponent::num...);
+          constexpr auto exp_gcd = gcd(Ps::exponent::num...);
           using u = unit<one, power_t<Ps, 1, exp_gcd>...>;
 
           if constexpr (all_int && exp_gcd != 1 && _unit::has_symbol<u>) {

@@ -13,6 +13,8 @@ namespace units::_details {
 
   using intm_t = __int128_t;
 
+  // * also create a literal so numbers can be written down
+
   template <char... chars>
   constexpr __int128_t operator""_imax() {
 
@@ -39,6 +41,28 @@ namespace units::_details {
       }
     }
     return ret;
+  }
+
+  // * extend the concept of integral type to support intm_t
+
+  namespace concepts {
+    template <class T>
+    concept integral = std::integral<T> || std::same_as<T, intm_t>;
+  }
+
+  // * implementation of a gcd function supporting the intm_t type
+
+  constexpr auto gcd(concepts::integral auto a, concepts::integral auto b, concepts::integral auto... is) {
+    if constexpr (sizeof...(is) == 0) {
+      while(b != 0) {
+        auto t = a%b;
+        a = b;
+        b = t;
+      }
+      return a;
+    } else {
+      return gcd(gcd(a, b), is...);
+    }
   }
 
   // - forward declarations and aliases
@@ -182,15 +206,7 @@ namespace units::_details {
   struct ratio {
     static_assert(d != 0, "Denominator cannot be zero.");
 
-    static constexpr intm_t div = [](auto a, auto b){
-      while(b != 0) {
-        intm_t t = a%b;
-        a = b;
-        b = t;
-      }
-      return a;
-    }(n, d);
-
+    static constexpr intm_t div = gcd(n, d);
     static constexpr intm_t num = n/div;
     static constexpr intm_t den = d/div;
 

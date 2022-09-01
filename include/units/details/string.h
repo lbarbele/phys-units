@@ -133,7 +133,7 @@ namespace units::_details {
   
   // - stringify: convert integral type value to a static_string
 
-  constexpr string stringify(const std::integral auto i) {
+  constexpr string stringify(const concepts::integral auto i) {
     if (i < 0) {
       return "-" + stringify(-i);
     } 
