@@ -216,8 +216,8 @@ namespace units::_details {
     static_assert(d != 0, "Denominator cannot be zero.");
 
     static constexpr intm_t div = gcd(n, d);
-    static constexpr intm_t num = n/div;
-    static constexpr intm_t den = d/div;
+    static constexpr intm_t num = (d > 0)? n/div : -n/div;
+    static constexpr intm_t den = (d > 0)? d/div : -d/div;
 
     using type = ratio<num, den>;
     using invert = ratio<den, num>;
