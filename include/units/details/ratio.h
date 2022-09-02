@@ -1,9 +1,12 @@
 #ifndef _include_units_details_ratio_h
 #define _include_units_details_ratio_h
 
+#include <algorithm>
+#include <array>
 #include <concepts>
 #include <initializer_list>
 #include <numeric>
+#include <string_view>
 #include <type_traits>
 
 namespace units::_details {
@@ -14,30 +17,20 @@ namespace units::_details {
 
   // * also create a literal so numbers can be written down
 
-  template <char... chars>
+  template <char... cs>
   constexpr __int128_t operator""_imax() {
+    constexpr std::array<char, sizeof...(cs)> chars = {cs...};
 
-    auto ctoi = [](char c){
-      switch (c) {
-        case '0': return 0;
-        case '1': return 1;
-        case '2': return 2;
-        case '3': return 3;
-        case '4': return 4;
-        case '5': return 5;
-        case '6': return 6;
-        case '7': return 7;
-        case '8': return 8;
-        case '9': return 9;
-      }
+    constexpr auto get_num = [](char c){
+      constexpr std::string_view str = "0123456789";
+      return (c == '\'') ? 0 : str.find_first_of(c);
     };
 
+    static_assert(std::all_of(chars.begin(), chars.end(), [&](char c){return get_num(c) < 10;}));
+
     __int128_t ret = 0;
-    for (auto c : {chars...}) {
-      if (c != '\'') {
-        ret *= 10;
-        ret += ctoi(c);
-      }
+    for (const auto c : chars) {
+      ret = 10*ret + get_num(c);
     }
     return ret;
   }
@@ -57,18 +50,16 @@ namespace units::_details {
       if (a == 0 && b == 0)
         return 0;
 
-      if (a < 0)
-        a = -a;
-        
-      if (b < 0)
-        b = -b;
+      a = (a<0)? -a : a;
+      b = (b<0)? -b : b;
 
-      while(b != 0) {
-        auto t = a%b;
-        a = b;
-        b = t;
-      }
-      return a;
+      if (b == 0)
+        return a;
+
+      if (a == 0)
+        return b;
+
+      return gcd(b%a, a);
     } else {
       return gcd(gcd(a, b), is...);
     }
