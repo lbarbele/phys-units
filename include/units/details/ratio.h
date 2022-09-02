@@ -30,7 +30,8 @@ namespace units::_details {
 
     __int128_t ret = 0;
     for (const auto c : chars) {
-      ret = 10*ret + get_num(c);
+      if (c != '\'')
+        ret = 10*ret + get_num(c);
     }
     return ret;
   }
