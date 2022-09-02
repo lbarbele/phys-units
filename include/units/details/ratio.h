@@ -2,7 +2,7 @@
 #define _include_units_details_ratio_h
 
 #include <concepts>
-#include <cstdint>
+#include <initializer_list>
 #include <numeric>
 #include <ratio>
 #include <type_traits>
