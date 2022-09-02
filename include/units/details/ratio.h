@@ -51,8 +51,18 @@ namespace units::_details {
 
   // * implementation of a gcd function supporting the intm_t type
 
-  constexpr auto gcd(concepts::integral auto a, concepts::integral auto b, concepts::integral auto... is) {
+  constexpr auto gcd(concepts::integral auto a, concepts::integral auto b, concepts::integral auto... is)
+  -> std::common_type_t<decltype(a), decltype(b)> {
     if constexpr (sizeof...(is) == 0) {
+      if (a == 0 && b == 0)
+        return 0;
+
+      if (a < 0)
+        a = -a;
+        
+      if (b < 0)
+        b = -b;
+
       while(b != 0) {
         auto t = a%b;
         a = b;
