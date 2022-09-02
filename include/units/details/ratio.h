@@ -4,7 +4,6 @@
 #include <concepts>
 #include <initializer_list>
 #include <numeric>
-#include <ratio>
 #include <type_traits>
 
 namespace units::_details {
