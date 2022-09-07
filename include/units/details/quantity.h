@@ -4,6 +4,7 @@
 #include <ostream>
 #include <string>
 #include <concepts>
+#include <compare>
 
 #include <units/details/power.h>
 #include <units/details/ratio.h>
@@ -366,30 +367,14 @@ namespace units::_details {
     }
 
     // * comparison
-
-    constexpr bool operator==(const concepts::quantity auto q) const {
+    
+    constexpr auto operator==(const concepts::quantity_compatible<type> auto q) const {
       return get_value() == q.template convert<unit_type>().get_value();
-    }
+    };
 
-    constexpr bool operator!=(const concepts::quantity auto q) const {
-      return get_value() != q.template convert<unit_type>().get_value();
-    }
-
-    constexpr bool operator<(const concepts::quantity auto q) const {
-      return get_value() < q.template convert<unit_type>().get_value();
-    }
-
-    constexpr bool operator>(const concepts::quantity auto q) const {
-      return get_value() > q.template convert<unit_type>().get_value();
-    }
-
-    constexpr bool operator<=(const concepts::quantity auto q) const {
-      return get_value() <= q.template convert<unit_type>().get_value();
-    }
-
-    constexpr bool operator>=(const concepts::quantity auto q) const {
-      return get_value() >= q.template convert<unit_type>().get_value();
-    }
+    constexpr auto operator<=>(const concepts::quantity_compatible<type> auto q) const {
+      return get_value() <=> q.template convert<unit_type>().get_value();
+    };
 
   };
 
