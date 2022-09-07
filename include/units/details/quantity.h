@@ -12,6 +12,7 @@
 namespace units::_details {
 
   // - helper definition of the arithmetic concept
+
   namespace concepts {
     template <class T>
     concept arithmetic = std::is_integral_v<T> || std::is_floating_point_v<T>;
@@ -19,7 +20,9 @@ namespace units::_details {
 
   // - forward declare the quantity struct
 
-  template <concepts::unit U, concepts::arithmetic V> struct quantity;
+  template <concepts::unit U, concepts::arithmetic V = double>
+  requires std::same_as<V, std::remove_cvref_t<V>>
+  struct quantity;
 
   // - traits and concepts
 
@@ -131,7 +134,8 @@ namespace units::_details {
 
   // - definition of the quantity class
 
-  template <concepts::unit Unit, concepts::arithmetic ValueType = double>
+  template <concepts::unit Unit, concepts::arithmetic ValueType>
+  requires std::same_as<ValueType, std::remove_cvref_t<ValueType>>
   struct quantity {
   public:
     using type = quantity;
@@ -297,20 +301,20 @@ namespace units::_details {
 
     // addition with quantity of compatible unit
     constexpr auto operator+(const concepts::quantity_compatible<type> auto q) const {
-      const auto value = get_value() + q.template convert<unit_type>().get_value();
+      auto value = get_value() + q.template convert<unit_type>().get_value();
       return quantity<unit_type, decltype(value)>(value);
     }
 
     // subtraction with quantity of compatible unit
     constexpr auto operator-(const concepts::quantity_compatible<type> auto q) const {
-      const auto value = get_value() - q.template convert<unit_type>().get_value();
+      auto value = get_value() - q.template convert<unit_type>().get_value();
       return quantity<unit_type, decltype(value)>(value);
     }
 
     // multiplication by another quantity
     constexpr auto operator*(const concepts::quantity auto q) const {
       using resulting_unit = unit_multiply<unit_type, typename decltype(q)::unit_type>;
-      const auto value = get_value() * q.get_value();
+      auto value = get_value() * q.get_value();
       return quantity<resulting_unit, decltype(value)>(value);
     }
 
@@ -323,7 +327,7 @@ namespace units::_details {
       // first, we determine the resulting unit
       using resulting_unit = unit_divide<unit_type, typename decltype(q)::unit_type>;
       // then, we compute the value
-      const auto value = get_value() / q.get_value();
+      auto value = get_value() / q.get_value();
       // next, create a quantity with a value type matching the one deduced for value
       return quantity<resulting_unit, decltype(value)>(value);
     }
