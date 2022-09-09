@@ -384,6 +384,14 @@ namespace units::_details {
     return q * x;
   };
 
+  // - division of arithmetic type by quantity
+
+  constexpr auto operator/(const concepts::arithmetic auto x, const concepts::quantity auto q) {
+    using unit_type = make_unit<inverse<typename std::remove_cvref_t<decltype(q)>::unit_type>>;
+    auto value = x / q.get_value();
+    return quantity<unit_type, decltype(value)>(value);
+  }
+
   // - print function
 
   template<class CharT, class Traits, class U, class V>
