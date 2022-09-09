@@ -69,6 +69,15 @@ namespace units {
       else
         return rad_value.template convert<Unit>();
     }
+
+    template <concepts::unit_compatible<radian> Unit = radian>
+    auto atan2(const concepts::arithmetic auto y, const concepts::arithmetic auto x) {
+      const auto rad_value = radian_t(std::atan2(y, x));
+      if constexpr (std::is_same_v<Unit, radian>)
+        return rad_value;
+      else
+        return rad_value.template convert<Unit>();
+    }
   }
 }
 
