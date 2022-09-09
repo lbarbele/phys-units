@@ -143,7 +143,7 @@ namespace units::_details::_math {
   // compile-time integer power of a quantity
   template <int p, concepts::unit U, concepts::arithmetic V>
   auto pow(const quantity<U, V> q) {
-    const auto value = pow<p>(q.get_value());
+    auto value = pow<p>(q.get_value());
     return quantity<make_unit<power<U, p>>, decltype(value)>(value);
   }
 
@@ -151,7 +151,7 @@ namespace units::_details::_math {
   auto hypot(const concepts::quantity auto a, const concepts::quantity auto b)
   requires concepts::quantity_compatible<decltype(a), decltype(b)> {
     using unit_type = typename decltype(a+b)::unit_type;
-    const auto value = hypot(
+    auto value = hypot(
       a.template convert<unit_type>().get_value(),
       b.template convert<unit_type>().get_value());
     return quantity<unit_type, decltype(value)>(value);
@@ -160,7 +160,7 @@ namespace units::_details::_math {
   auto hypot(const concepts::quantity auto a, const concepts::quantity auto b, const concepts::quantity auto c)
   requires concepts::quantity_compatible<decltype(a), decltype(b), decltype(c)> {
     using unit_type = typename decltype(a+b+c)::unit_type;
-    const auto value = hypot(
+    auto value = hypot(
       a.template convert<unit_type>().get_value(),
       b.template convert<unit_type>().get_value(),
       c.template convert<unit_type>().get_value());
