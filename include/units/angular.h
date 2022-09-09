@@ -1,6 +1,8 @@
 #ifndef _include_units_angular_h
 #define _include_units_angular_h
 
+#include <cmath>
+
 #include <units/framework.h>
 
 namespace units {
