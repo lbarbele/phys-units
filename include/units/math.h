@@ -82,7 +82,12 @@ namespace units::_details::_math {
 
   // fmod
   auto fmod (const concepts::quantity auto a, const concepts::quantity auto b)
-  {return a - decltype(a/b)(std::trunc((a/b).get_value())) * b;}
+  {
+    if constexpr (concepts::quantity_compatible<decltype(a), decltype(b)>)
+      return a - decltype(a/b)(std::trunc(a/b)) * b;
+    else 
+      return a - decltype(a/b)(std::trunc((a/b).get_value())) * b;
+  }
 
   auto fmod (const concepts::quantity auto a, const concepts::arithmetic auto b)
   {return decltype(a)(fmod(a.get_value(), b));}
