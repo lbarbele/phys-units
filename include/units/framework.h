@@ -40,6 +40,11 @@ namespace units {
   // * literals (defined along with units)
 
   namespace literals {};
+
+  // * traits and concepts
+
+  namespace concepts = _details::concepts;
+  namespace traits = _details::traits;
 }
 
 #endif
