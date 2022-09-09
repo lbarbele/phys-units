@@ -154,7 +154,7 @@ namespace units::_details {
     explicit constexpr quantity(const value_type& value = 0) : m_value(value) {}
 
     // construct from another quantity
-    constexpr quantity(const concepts::quantity_compatible<type> auto q)
+    explicit constexpr quantity(const concepts::quantity_compatible<type> auto q)
     : m_value(q.template convert<unit_type>().get_value()) {}
 
     // * access to raw underlying value
@@ -393,6 +393,44 @@ namespace units::_details {
   ) {
     return os << q.get_value() << " " << U::symbol;
   }
+
+}
+
+// - Specialization of ::std traits
+namespace std {
+
+  // * std::common_type for quantities with exactly same units
+
+  template<
+    units::_details::concepts::unit U,
+    units::_details::concepts::arithmetic Va,
+    units::_details::concepts::arithmetic Vb
+  >
+  struct common_type<
+    units::_details::quantity<U, Va>,
+    units::_details::quantity<U, Vb>
+  > {
+    using unit_type = U;
+    using value_type = std::common_type_t<Va, Vb>;
+    using type = units::_details::quantity<unit_type, value_type>;
+  };
+
+  // * std::common_type for quantites of different, but compatible units
+
+  template <
+    units::_details::concepts::unit Ua,
+    units::_details::concepts::unit_compatible<Ua> Ub,
+    units::_details::concepts::arithmetic Va,
+    units::_details::concepts::arithmetic Vb
+  >
+  struct common_type<
+    units::_details::quantity<Ua, Va>,
+    units::_details::quantity<Ub, Vb>
+  > {
+    using value_type = std::common_type_t<Va, Vb>;
+    using unit_type = units::_details::make_unit<Ua, units::_details::ratio_power<typename Ua::factor, -1>>;
+    using type = units::_details::quantity<unit_type, value_type>;
+  };
 
 }
 
