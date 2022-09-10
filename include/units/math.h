@@ -130,6 +130,13 @@ namespace units::_details::_math {
   units_math_import_function_for_dimensionless(cbrt)
   units_math_import_function_for_dimensionless(hypot)
 
+  // square root restricted to units without factor and even powers
+  template <concepts::reduced_power... Ps, concepts::arithmetic V>
+  auto sqrt(const quantity<unit<one, Ps...>, V> q) {
+    using unit_sqrt = unit<one, power_t<Ps, 1, 2>...>;
+    return quantity<unit_sqrt, decltype(sqrt(V{}))>(sqrt(q.get_value()));
+  }
+
   // compile-time integer power of an arithmetic-type object
   template <int p>
   auto pow(const concepts::arithmetic auto x) -> std::conditional_t<(p>=0), decltype(x), long double> {
