@@ -149,12 +149,21 @@ namespace units::_details {
   using ratio_subtract = ratio_t<(A::num*B::den - A::den*B::num), A::den * B::den>;
 
   // * ratio multiplication
+  namespace _ratio {
+    template <concepts::ratio A, concepts::ratio B>
+    struct multiply {
+      using a = ratio_t<A::num, B::den>;
+      using b = ratio_t<B::num, A::den>;
+      using type = ratio_t<a::num*b::num, a::den*b::den>;
+    };
+  }
+
   template <concepts::ratio A, concepts::ratio B>
-  using ratio_multiply = ratio_t<A::num*B::num, A::den*B::den>;
+  using ratio_multiply = typename _ratio::multiply<A, B>::type;
 
   // * ratio division
   template <concepts::ratio A, concepts::ratio B>
-  using ratio_divide = ratio_t<A::num*B::den, A::den*B::num>;
+  using ratio_divide = ratio_multiply<A, ratio<B::den, B::num>>;
 
   // * implementation of the ratio power
   namespace _ratio {
